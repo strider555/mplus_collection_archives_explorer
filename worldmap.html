@@ -257,13 +257,12 @@ async function init() {
     shapes.forEach(s => { s.style.fill = fill; });
     g.classList.add('has-data');
     g.addEventListener('mouseenter', e => {
-      g.style.filter = 'brightness(1.45)';
       showTooltip(`<div class="tt"></div><div class="tm"></div>`, e.clientX, e.clientY);
       tooltip.querySelector('.tt').textContent = `${c.name_en}${c.name_tc ? ' ' + c.name_tc : ''}`;
       tooltip.querySelector('.tm').textContent = `${fmt(c.count)} objects — click to list`;
     });
     g.addEventListener('mousemove', e => showTooltip(tooltip.innerHTML, e.clientX, e.clientY));
-    g.addEventListener('mouseleave', () => { g.style.filter = ''; hideTooltip(); });
+    g.addEventListener('mouseleave', () => { hideTooltip(); });
     // stopPropagation: in this SVG some country groups nest inside others
     // (Taiwan's group sits inside China's), and a click would otherwise
     // bubble up and let the outer country's handler overwrite the panel.
