@@ -1,0 +1,658 @@
+{
+ "pins": [
+  {
+   "keys": [
+    "Connaught Place"
+   ],
+   "name_en": "Connaught Place",
+   "name_tc": "",
+   "level": "street",
+   "count": 552,
+   "lat": 22.282565,
+   "lng": 114.159797,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Hoi Shing Road"
+   ],
+   "name_en": "Hoi Shing Road",
+   "name_tc": "海盛路",
+   "level": "street",
+   "count": 512,
+   "lat": 22.373433,
+   "lng": 114.105889,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Stubbs Road",
+    "司徒拔道"
+   ],
+   "name_en": "Stubbs Road",
+   "name_tc": "司徒拔道",
+   "level": "street",
+   "count": 389,
+   "lat": 22.268258,
+   "lng": 114.181644,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Clear Water Bay Road"
+   ],
+   "name_en": "Clear Water Bay Road",
+   "name_tc": "清水灣道",
+   "level": "street",
+   "count": 241,
+   "lat": 22.333566,
+   "lng": 114.213638,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Plantation Road"
+   ],
+   "name_en": "Plantation Road",
+   "name_tc": "種植道",
+   "level": "street",
+   "count": 160,
+   "lat": 22.270111,
+   "lng": 114.152701,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "金鐘道"
+   ],
+   "name_en": "Queensway",
+   "name_tc": "金鐘道",
+   "level": "street",
+   "count": 117,
+   "lat": 22.278589,
+   "lng": 114.164143,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Harbour Road",
+    "港灣道"
+   ],
+   "name_en": "Harbour Road",
+   "name_tc": "港灣道",
+   "level": "street",
+   "count": 71,
+   "lat": 22.280943,
+   "lng": 114.177104,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Harcourt Road"
+   ],
+   "name_en": "Harcourt Road",
+   "name_tc": "夏慤道",
+   "level": "street",
+   "count": 32,
+   "lat": 22.279468,
+   "lng": 114.165566,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Electric Road"
+   ],
+   "name_en": "Electric Road",
+   "name_tc": "電氣道",
+   "level": "street",
+   "count": 19,
+   "lat": 22.290217,
+   "lng": 114.194472,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Peak Road"
+   ],
+   "name_en": "Peak Road",
+   "name_tc": "山頂道",
+   "level": "street",
+   "count": 18,
+   "lat": 22.269193,
+   "lng": 114.150838,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Chung Hom Kok Road"
+   ],
+   "name_en": "Chung Hom Kok Road",
+   "name_tc": "舂磡角道",
+   "level": "street",
+   "count": 17,
+   "lat": 22.214939,
+   "lng": 114.200478,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Nathan Road"
+   ],
+   "name_en": "Nathan Road",
+   "name_tc": "彌敦道",
+   "level": "street",
+   "count": 5,
+   "lat": 22.31662,
+   "lng": 114.169865,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "沙宣道"
+   ],
+   "name_en": "Sassoon Road",
+   "name_tc": "沙宣道",
+   "level": "street",
+   "count": 3,
+   "lat": 22.269884,
+   "lng": 114.130065,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Clague Garden Estate"
+   ],
+   "name_en": "Clague Garden Estate",
+   "name_tc": "祈德尊新邨",
+   "level": "building",
+   "count": 512,
+   "lat": 22.36998,
+   "lng": 114.110252,
+   "status": "verified",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Connaught Centre"
+   ],
+   "name_en": "Connaught Centre",
+   "name_tc": "",
+   "level": "building",
+   "count": 504,
+   "lat": 22.283056,
+   "lng": 114.159234,
+   "status": "verified",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Connaught Centre Footbridge"
+   ],
+   "name_en": "Connaught Centre Footbridge",
+   "name_tc": "",
+   "level": "building",
+   "count": 85,
+   "lat": 22.283056,
+   "lng": 114.159234,
+   "status": "verified",
+   "note": ""
+  },
+  {
+   "keys": [
+    "AIA Building"
+   ],
+   "name_en": "AIA Building",
+   "name_tc": "友邦大廈",
+   "level": "building",
+   "count": 346,
+   "lat": 22.273831,
+   "lng": 114.177367,
+   "status": "verified",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Choi Hung Estate",
+    "彩虹邨"
+   ],
+   "name_en": "Choi Hung Estate",
+   "name_tc": "彩虹邨",
+   "level": "building",
+   "count": 220,
+   "lat": 22.335505,
+   "lng": 114.206214,
+   "status": "verified",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Bond Centre"
+   ],
+   "name_en": "Bond Centre",
+   "name_tc": "奔達中心",
+   "level": "building",
+   "count": 117,
+   "lat": 22.279355,
+   "lng": 114.163493,
+   "status": "verified",
+   "note": ""
+  },
+  {
+   "keys": [
+    "ATL Container Freight Station"
+   ],
+   "name_en": "ATL Container Freight Station",
+   "name_tc": "亞洲貨櫃大廈",
+   "level": "building",
+   "count": 105,
+   "lat": 22.34248,
+   "lng": 114.124476,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Hong Kong Arts Centre"
+   ],
+   "name_en": "Hong Kong Arts Centre",
+   "name_tc": "香港藝術中心",
+   "level": "building",
+   "count": 74,
+   "lat": 22.28021,
+   "lng": 114.170817,
+   "status": "verified",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Jardine House",
+    "怡和大廈"
+   ],
+   "name_en": "Jardine House",
+   "name_tc": "怡和大廈",
+   "level": "building",
+   "count": 43,
+   "lat": 22.283056,
+   "lng": 114.159234,
+   "status": "verified",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Peak Tower"
+   ],
+   "name_en": "Peak Tower",
+   "name_tc": "凌霄閣",
+   "level": "building",
+   "count": 36,
+   "lat": 22.271255,
+   "lng": 114.149986,
+   "status": "verified",
+   "note": ""
+  },
+  {
+   "keys": [
+    "康怡花園"
+   ],
+   "name_en": "Kornhill",
+   "name_tc": "康怡花園",
+   "level": "building",
+   "count": 34,
+   "lat": 22.280919,
+   "lng": 114.215151,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Hutchison House"
+   ],
+   "name_en": "Hutchison House",
+   "name_tc": "和記大廈",
+   "level": "building",
+   "count": 32,
+   "lat": 22.281031,
+   "lng": 114.162485,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Urban Council Aberdeen Market Complex"
+   ],
+   "name_en": "Urban Council Aberdeen Market Complex",
+   "name_tc": "市政局香港仔街市",
+   "level": "building",
+   "count": 31,
+   "lat": 22.249289,
+   "lng": 114.15464,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Chung Chi Hall Student Centre"
+   ],
+   "name_en": "Chung Chi Hall Student Centre",
+   "name_tc": "眾志堂學生活動中心",
+   "level": "building",
+   "count": 27,
+   "lat": 22.416652,
+   "lng": 114.209769,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "聖雅各福群會大樓"
+   ],
+   "name_en": "St. James' Settlement Building",
+   "name_tc": "聖雅各福群會大樓",
+   "level": "building",
+   "count": 23,
+   "lat": 22.272409,
+   "lng": 114.173697,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "AIA Tower"
+   ],
+   "name_en": "AIA Tower",
+   "name_tc": "友邦廣場",
+   "level": "building",
+   "count": 19,
+   "lat": 22.28826,
+   "lng": 114.19237,
+   "status": "verified",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Hong Kong University of Science and Technology"
+   ],
+   "name_en": "Hong Kong University of Science and Technology",
+   "name_tc": "科技大學",
+   "level": "building",
+   "count": 19,
+   "lat": 22.336078,
+   "lng": 114.265677,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "下葵涌華員邨"
+   ],
+   "name_en": "Wah Yuen Chuen",
+   "name_tc": "下葵涌華員邨",
+   "level": "building",
+   "count": 19,
+   "lat": 22.350055,
+   "lng": 114.136049,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Hong Kong Adventist Hospital"
+   ],
+   "name_en": "Hong Kong Adventist Hospital",
+   "name_tc": "港安醫院",
+   "level": "building",
+   "count": 18,
+   "lat": 22.26452,
+   "lng": 114.184374,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Exchange Square"
+   ],
+   "name_en": "Exchange Square",
+   "name_tc": "交易廣場",
+   "level": "building",
+   "count": 13,
+   "lat": 22.283937,
+   "lng": 114.158108,
+   "status": "verified",
+   "note": ""
+  },
+  {
+   "keys": [
+    "演藝學院"
+   ],
+   "name_en": "The Hong Kong Academy for Performing Arts",
+   "name_tc": "演藝學院",
+   "level": "building",
+   "count": 11,
+   "lat": 22.280201,
+   "lng": 114.169424,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Shatin Centre"
+   ],
+   "name_en": "Shatin Centre",
+   "name_tc": "沙田中心",
+   "level": "building",
+   "count": 10,
+   "lat": 22.382542,
+   "lng": 114.190171,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Government Headquarters"
+   ],
+   "name_en": "Government Headquarters",
+   "name_tc": "特別行政區政府總部",
+   "level": "building",
+   "count": 9,
+   "lat": 22.280473,
+   "lng": 114.165597,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "曉廬會所"
+   ],
+   "name_en": "Highcliff",
+   "name_tc": "曉廬會所",
+   "level": "building",
+   "count": 9,
+   "lat": 22.265092,
+   "lng": 114.184169,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "City Hall"
+   ],
+   "name_en": "City Hall",
+   "name_tc": "大會堂",
+   "level": "building",
+   "count": 8,
+   "lat": 22.28235,
+   "lng": 114.161577,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "皇后像廣場"
+   ],
+   "name_en": "Statue Square",
+   "name_tc": "皇后像廣場",
+   "level": "building",
+   "count": 8,
+   "lat": 22.281775,
+   "lng": 114.160117,
+   "status": "verified",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Sheraton Hotel"
+   ],
+   "name_en": "Sheraton Hotel",
+   "name_tc": "喜來登酒店",
+   "level": "building",
+   "count": 7,
+   "lat": 22.295297,
+   "lng": 114.17274,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Pacific Trade Centre"
+   ],
+   "name_en": "Pacific Trade Centre",
+   "name_tc": "太平洋貿易中心",
+   "level": "building",
+   "count": 6,
+   "lat": 22.316212,
+   "lng": 114.212394,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Graduate House"
+   ],
+   "name_en": "Graduate House",
+   "name_tc": "大學",
+   "level": "building",
+   "count": 5,
+   "lat": 22.281958,
+   "lng": 114.137466,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Exchange Square III"
+   ],
+   "name_en": "Exchange Square III",
+   "name_tc": "交易廣場三期",
+   "level": "building",
+   "count": 3,
+   "lat": 22.284542,
+   "lng": 114.157326,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "立法會綜合大樓"
+   ],
+   "name_en": "Legislative Council Complex",
+   "name_tc": "立法會綜合大樓",
+   "level": "building",
+   "count": 3,
+   "lat": 22.281237,
+   "lng": 114.166181,
+   "status": "verified",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Residence of Mr Jackson Wong"
+   ],
+   "name_en": "Residence of Mr Jackson Wong",
+   "name_tc": "",
+   "level": "building",
+   "count": 16,
+   "lat": 22.215468,
+   "lng": 114.200265,
+   "status": "single-source",
+   "note": "80 Chung Hom Kok Road (1966) — pin approximate"
+  },
+  {
+   "keys": [
+    "Peak Villas"
+   ],
+   "name_en": "Peak Villas",
+   "name_tc": "頤翠苑",
+   "level": "building",
+   "count": 18,
+   "lat": 22.265097,
+   "lng": 114.154896,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "Union House"
+   ],
+   "name_en": "Union House",
+   "name_tc": "於仁行",
+   "level": "building",
+   "count": 6,
+   "lat": 22.282221,
+   "lng": 114.15843,
+   "status": "single-source",
+   "note": "Demolished — site is now Chater House, 8 Connaught Road Central"
+  },
+  {
+   "keys": [
+    "Hilton Hotel"
+   ],
+   "name_en": "Hilton Hotel",
+   "name_tc": "",
+   "level": "building",
+   "count": 10,
+   "lat": 22.279278,
+   "lng": 114.160273,
+   "status": "single-source",
+   "note": "Demolished 1995 — site is now Cheung Kong Center, 2 Queen’s Road Central"
+  },
+  {
+   "keys": [
+    "Bell House"
+   ],
+   "name_en": "Bell House",
+   "name_tc": "彌敦道寶寧大廈",
+   "level": "building",
+   "count": 5,
+   "lat": 22.313415,
+   "lng": 114.170321,
+   "status": "single-source",
+   "note": ""
+  },
+  {
+   "keys": [
+    "港灣道信和大廈"
+   ],
+   "name_en": "Sino Tower",
+   "name_tc": "港灣道信和大廈",
+   "level": "building",
+   "count": 10,
+   "lat": 22.28002,
+   "lng": 114.175472,
+   "status": "single-source",
+   "note": "Unbuilt competition design (Paul Rudolph, 1989) — pinned at the project site, 26 Harbour Road"
+  }
+ ]
+}

@@ -55,11 +55,21 @@
     #pinLayer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
     #pinLayer .pin { pointer-events: auto; cursor: pointer; stroke: #0d1117; stroke-width: 0.9; }
     #pinLayer .pin:hover { stroke: #ffffff; stroke-width: 1.4; }
-    #pinLayer .hk-marker { pointer-events: auto; cursor: pointer; }
+    #pinLayer .hk-marker { pointer-events: auto; }
     #pinLayer .hk-label {
       font-family: 'Inter', sans-serif; font-size: 12.5px; font-weight: 600; fill: var(--gold);
       paint-order: stroke; stroke: #0d1117; stroke-width: 3.5px; pointer-events: none;
     }
+
+    .zoom-controls { position: absolute; top: 26px; right: 34px; display: flex; flex-direction: column; gap: 6px; z-index: 50; }
+    .zoom-controls button {
+      width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border);
+      background: rgba(22,27,34,0.92); color: var(--text); font-size: 17px; cursor: pointer; line-height: 1;
+      font-family: 'Inter', sans-serif;
+    }
+    .zoom-controls button:hover { border-color: var(--gold); color: var(--gold); }
+    #mapHolder { cursor: grab; touch-action: none; }
+    #mapHolder.dragging { cursor: grabbing; }
 
     .tooltip {
       position: fixed; padding: 9px 13px; background: rgba(26,31,46,0.97);
@@ -96,6 +106,7 @@
       .legend-bar { padding: 10px 18px; }
       .legend-hint { margin-left: 0; }
       .map-wrap { padding: 12px 8px 4px; }
+      .zoom-controls { top: 18px; right: 14px; }
       .panel { width: 100vw; right: -100vw; }
     }
   </style>
@@ -117,12 +128,17 @@
   <span class="legend-item"><span class="swatch"></span> Country — shaded by object count</span>
   <span class="legend-item"><span class="dot city"></span> City</span>
   <span class="legend-item"><span class="dot province"></span> Province / State</span>
-  <span class="legend-item"><span class="diamond"></span> Hong Kong → Hong Kong Map</span>
-  <span class="legend-hint">Click a shaded country or a pin to list its objects</span>
+  <span class="legend-item"><span class="diamond"></span> Hong Kong</span>
+  <span class="legend-hint">Scroll or pinch to zoom · drag to pan · click a shaded country or a pin to list its objects</span>
 </div>
 
 <div class="map-wrap">
   <div id="mapHolder"><div class="loading" id="loadingMsg">Loading map…</div></div>
+  <div class="zoom-controls">
+    <button id="zoomIn" aria-label="Zoom in">+</button>
+    <button id="zoomOut" aria-label="Zoom out">−</button>
+    <button id="zoomReset" aria-label="Reset view">⟲</button>
+  </div>
 </div>
 
 <footer>World map: SVG-World-Map (MIT License) · Collection data: M+ (CC0) · Locations extracted from object titles</footer>
@@ -275,19 +291,107 @@ async function init() {
   label.setAttribute('x', hk.x - 14); label.setAttribute('y', hk.y + 4);
   label.setAttribute('text-anchor', 'end');
   label.setAttribute('class', 'hk-label');
-  label.textContent = `Hong Kong · ${fmt(hk.count)} objects → Hong Kong Map`;
+  label.textContent = 'Hong Kong';
   hkGroup.appendChild(diamond); hkGroup.appendChild(label);
   hkGroup.addEventListener('mouseenter', e => {
     diamond.style.fill = '#ffd34d';
     showTooltip(`<div class="tt"></div><div class="tm"></div>`, e.clientX, e.clientY);
     tooltip.querySelector('.tt').textContent = 'Hong Kong 香港';
-    tooltip.querySelector('.tm').textContent = `${fmt(hk.count)} objects — see them on the Hong Kong Map`;
+    tooltip.querySelector('.tm').textContent = `${fmt(hk.count)} objects — Hong Kong Map link at the top of the page`;
   });
   hkGroup.addEventListener('mouseleave', () => { diamond.style.fill = '#E6A817'; hideTooltip(); });
-  hkGroup.addEventListener('click', () => { window.location.href = './hkmap.html'; });
   overlay.appendChild(hkGroup);
 
   holder.appendChild(overlay);
+
+  // ---- zoom & pan: one shared viewBox drives the base map and the pin overlay ----
+  const FULL = { x: 0, y: 0, w: 1000, h: 507.209 };
+  let view = { ...FULL };
+  let suppressClick = false;
+  function clampView() {
+    view.w = Math.min(FULL.w, Math.max(90, view.w));
+    view.h = view.w * FULL.h / FULL.w;
+    view.x = Math.min(FULL.w - view.w * 0.85, Math.max(-view.w * 0.15, view.x));
+    view.y = Math.min(FULL.h - view.h * 0.85, Math.max(-view.h * 0.15, view.y));
+  }
+  function applyView() {
+    const vb = `${view.x} ${view.y} ${view.w} ${view.h}`;
+    svg.setAttribute('viewBox', vb);
+    overlay.setAttribute('viewBox', vb);
+  }
+  function zoomAt(clientX, clientY, factor) {
+    const rect = holder.getBoundingClientRect();
+    const px = (clientX - rect.left) / rect.width;
+    const py = (clientY - rect.top) / rect.height;
+    const ax = view.x + px * view.w;
+    const ay = view.y + py * view.h;
+    view.w = Math.min(FULL.w, Math.max(90, view.w * factor));
+    view.h = view.w * FULL.h / FULL.w;
+    view.x = ax - px * view.w;
+    view.y = ay - py * view.h;
+    clampView(); applyView();
+  }
+  holder.addEventListener('wheel', e => {
+    e.preventDefault();
+    zoomAt(e.clientX, e.clientY, e.deltaY < 0 ? 0.82 : 1.22);
+  }, { passive: false });
+  holder.addEventListener('click', e => {
+    if (suppressClick) { e.stopPropagation(); e.preventDefault(); suppressClick = false; }
+  }, true);
+
+  const pointers = new Map();
+  let movedTotal = 0, pinchDist = 0;
+  holder.addEventListener('pointerdown', e => {
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 1) movedTotal = 0;
+    if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      pinchDist = Math.hypot(a.x - b.x, a.y - b.y);
+    }
+    holder.classList.add('dragging');
+  });
+  window.addEventListener('pointermove', e => {
+    if (!pointers.has(e.pointerId)) return;
+    const prev = pointers.get(e.pointerId);
+    const dx = e.clientX - prev.x, dy = e.clientY - prev.y;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    movedTotal += Math.abs(dx) + Math.abs(dy);
+    if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      const nd = Math.hypot(a.x - b.x, a.y - b.y);
+      if (pinchDist > 0 && nd > 0) zoomAt((a.x + b.x) / 2, (a.y + b.y) / 2, pinchDist / nd);
+      pinchDist = nd;
+      return;
+    }
+    const rect = holder.getBoundingClientRect();
+    view.x -= dx / rect.width * view.w;
+    view.y -= dy / rect.height * view.h;
+    clampView(); applyView();
+  });
+  window.addEventListener('pointerup', e => {
+    if (!pointers.has(e.pointerId)) return;
+    pointers.delete(e.pointerId);
+    if (pointers.size === 0) {
+      holder.classList.remove('dragging');
+      if (movedTotal > 6) suppressClick = true;
+      movedTotal = 0;
+    }
+  });
+  window.addEventListener('pointercancel', e => {
+    pointers.delete(e.pointerId);
+    if (pointers.size === 0) holder.classList.remove('dragging');
+  });
+  document.getElementById('zoomIn').addEventListener('click', () => {
+    const r = holder.getBoundingClientRect();
+    zoomAt(r.left + r.width / 2, r.top + r.height / 2, 0.68);
+  });
+  document.getElementById('zoomOut').addEventListener('click', () => {
+    const r = holder.getBoundingClientRect();
+    zoomAt(r.left + r.width / 2, r.top + r.height / 2, 1.47);
+  });
+  document.getElementById('zoomReset').addEventListener('click', () => {
+    view = { ...FULL }; applyView();
+  });
 }
 
 init().catch(err => {

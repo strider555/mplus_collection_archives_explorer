@@ -43,6 +43,10 @@
     #hkSvg .lbl-en { font-size: 11px; font-weight: 600; fill: #e6e8eb; }
     #hkSvg .lbl-tc { font-size: 11px; fill: #c9ced6; }
     #hkSvg .lbl-zero { fill: #6e7681; }
+    #hkSvg circle.pin { stroke: #0d1117; stroke-width: 1.3; cursor: pointer; fill-opacity: 0.94; }
+    #hkSvg circle.pin:hover { stroke: #ffffff; stroke-width: 1.8; }
+    .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin: 0 4px 0 10px; vertical-align: -1px; }
+    .dot.first { margin-left: 8px; }
     .map-hint { color: var(--muted); font-size: 12px; padding: 4px 4px 0; }
 
     .sidebar {
@@ -107,12 +111,12 @@
 <div class="layout">
   <div class="map-area">
     <div id="mapHolder"><div class="loading" id="loadingMsg">Loading map…</div></div>
-    <div class="map-hint">Click a district to list its objects. Streets and buildings are listed in the panel — they are not pinned, as no verified coordinates exist for them.</div>
+    <div class="map-hint">Click a district or a pin to list its objects.<span class="dot first" style="background:#4ecdc4"></span>Street 街道<span class="dot" style="background:#ff6b6b"></span>Building 建築物 — 50 located streets &amp; buildings are pinned; the rest appear in the panel only.</div>
   </div>
   <aside class="sidebar" id="sidebar"></aside>
 </div>
 
-<footer>District boundaries: © Lands Department / DATA.GOV.HK — Hong Kong Administrative Boundaries dataset · Collection data: M+ (CC0)</footer>
+<footer>District boundaries: © Lands Department / DATA.GOV.HK — Hong Kong Administrative Boundaries dataset · Street &amp; building locations: OpenStreetMap contributors / Wikidata · Collection data: M+ (CC0)</footer>
 
 <div class="tooltip" id="tooltip"></div>
 
@@ -121,6 +125,7 @@ const tooltip = document.getElementById('tooltip');
 const sidebar = document.getElementById('sidebar');
 let hkData = null;
 let objectsByKey = {};
+let pinList = [];
 
 function goldColor(count, max) {
   const t = Math.log(1 + count) / Math.log(1 + max);
@@ -171,7 +176,7 @@ function renderLists() {
   });
 }
 
-function showObjects(key, nameEn, nameTc, levelLabel, count) {
+function showObjects(key, nameEn, nameTc, levelLabel, count, extraKeys) {
   sidebar.innerHTML = '';
   const back = document.createElement('button');
   back.className = 'back-btn';
@@ -194,7 +199,14 @@ function showObjects(key, nameEn, nameTc, levelLabel, count) {
   meta.textContent = `${levelLabel} · ${fmt(count)} objects`;
   sidebar.appendChild(meta);
 
-  const list = objectsByKey[key] || [];
+  let list = (objectsByKey[key] || []).slice();
+  if (extraKeys && extraKeys.length) {
+    const seen = new Set(list.map(o => o.title + '|' + o.fonds));
+    extraKeys.forEach(k => (objectsByKey[k] || []).forEach(o => {
+      const id = o.title + '|' + o.fonds;
+      if (!seen.has(id)) { seen.add(id); list.push(o); }
+    }));
+  }
   const frag = document.createDocumentFragment();
   list.slice(0, 200).forEach(o => {
     const row = document.createElement('div');
@@ -220,13 +232,15 @@ function showObjects(key, nameEn, nameTc, levelLabel, count) {
 
 /* ---------- map ---------- */
 async function init() {
-  const [geo, data, objects] = await Promise.all([
+  const [geo, data, objects, pinsData] = await Promise.all([
     fetch('./data/hk_districts.json').then(r => r.json()),
     fetch('./data/map-hk.json').then(r => r.json()),
-    fetch('./data/map-hk-objects.json').then(r => r.json())
+    fetch('./data/map-hk-objects.json').then(r => r.json()),
+    fetch('./data/map-hk-pins.json').then(r => r.json())
   ]);
   hkData = data;
   objectsByKey = objects;
+  pinList = pinsData.pins || [];
 
   const counts = {};
   data.districts.forEach(d => { counts[d.name_en] = d; });
@@ -312,6 +326,47 @@ async function init() {
     t2.textContent = nameTc;
     svg.appendChild(t1); svg.appendChild(t2);
   });
+
+  // pins layer (streets & buildings), drawn on top of the districts
+  const maxPin = Math.max(...pinList.map(p => p.count));
+  const posGroups = {};
+  pinList.forEach(p => {
+    const k = p.lat.toFixed(6) + ',' + p.lng.toFixed(6);
+    (posGroups[k] = posGroups[k] || []).push(p);
+  });
+  const pinPos = new Map();
+  Object.values(posGroups).forEach(g => {
+    if (g.length === 1) { pinPos.set(g[0], [X(g[0].lng), Y(g[0].lat)]); return; }
+    g.forEach((p, i) => {
+      const a = (2 * Math.PI * i) / g.length - Math.PI / 2;
+      pinPos.set(p, [X(p.lng) + 7 * Math.cos(a), Y(p.lat) + 7 * Math.sin(a)]);
+    });
+  });
+  const pinLayer = document.createElementNS(svgNS, 'g');
+  [...pinList].sort((a, b) => b.count - a.count).forEach(p => {
+    const [cx, cy] = pinPos.get(p);
+    const r = 4.2 + 3.4 * (Math.log(1 + p.count) / Math.log(1 + maxPin));
+    const c = document.createElementNS(svgNS, 'circle');
+    c.setAttribute('cx', cx.toFixed(1)); c.setAttribute('cy', cy.toFixed(1));
+    c.setAttribute('r', r.toFixed(1));
+    c.setAttribute('class', 'pin');
+    c.style.fill = p.level === 'street' ? '#4ecdc4' : '#ff6b6b';
+    const label = p.level === 'street' ? 'Street' : 'Building';
+    c.addEventListener('mouseenter', e => {
+      showTooltip(`${p.name_en || p.name_tc}${p.name_en && p.name_tc ? ' ' + p.name_tc : ''}`,
+        `${label} · ${fmt(p.count)} objects — click to list${p.note ? ' · ' + p.note : ''}`,
+        e.clientX, e.clientY);
+    });
+    c.addEventListener('mousemove', e => {
+      tooltip.style.left = Math.min(e.clientX + 14, window.innerWidth - 290) + 'px';
+      tooltip.style.top = Math.min(e.clientY + 12, window.innerHeight - 110) + 'px';
+    });
+    c.addEventListener('mouseleave', hideTooltip);
+    c.addEventListener('click', () =>
+      showObjects(p.keys[0], p.name_en, p.name_tc, label, p.count, p.keys.slice(1)));
+    pinLayer.appendChild(c);
+  });
+  svg.appendChild(pinLayer);
 
   const holder = document.getElementById('mapHolder');
   holder.innerHTML = '';
