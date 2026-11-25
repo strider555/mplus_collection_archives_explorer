@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hong Kong Map — M+ Collection Archives</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117; --surface: #161b22; --card: #1a1f2e; --border: #30363d;
+      --text: #e6e8eb; --muted: #8b949e;
+      --gold: #E6A817; --teal: #4ecdc4; --coral: #ff6b6b;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    header {
+      padding: 18px 32px; display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--border); background: var(--surface); flex-wrap: wrap; gap: 12px;
+    }
+    header h1 { font-size: 22px; font-weight: 700; color: var(--gold); letter-spacing: -0.3px; }
+    header .subtitle { color: var(--muted); font-size: 13px; margin-top: 2px; }
+    .nav-links { display: flex; gap: 12px; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none; font-size: 13px; padding: 6px 12px;
+      border: 1px solid var(--border); border-radius: 8px; transition: all 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); border-color: var(--muted); }
+    .nav-links a.gold-link { color: var(--gold); border-color: rgba(230,168,23,0.45); }
+    .nav-links a.gold-link:hover { background: rgba(230,168,23,0.12); color: var(--gold); }
+
+    .layout { display: flex; align-items: stretch; max-width: 1360px; margin: 0 auto; }
+    .map-area { flex: 1; min-width: 0; padding: 18px 10px 10px 24px; }
+    #hkSvg { width: 100%; height: auto; display: block; }
+    #hkSvg path.district { stroke: #30363d; stroke-width: 0.7; cursor: pointer; }
+    #hkSvg path.district:hover { stroke: #e6e8eb; stroke-width: 1.2; }
+    #hkSvg text {
+      font-family: 'Inter', sans-serif; text-anchor: middle; pointer-events: none;
+      paint-order: stroke; stroke: #0d1117; stroke-width: 3px;
+    }
+    #hkSvg .lbl-en { font-size: 11px; font-weight: 600; fill: #e6e8eb; }
+    #hkSvg .lbl-tc { font-size: 11px; fill: #c9ced6; }
+    #hkSvg .lbl-zero { fill: #6e7681; }
+    .map-hint { color: var(--muted); font-size: 12px; padding: 4px 4px 0; }
+
+    .sidebar {
+      width: 350px; flex-shrink: 0; border-left: 1px solid var(--border);
+      background: var(--surface); padding: 18px 20px; max-height: calc(100vh - 76px);
+      overflow-y: auto; position: sticky; top: 0;
+    }
+    .sidebar h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--gold); margin: 14px 0 6px; }
+    .sidebar h2:first-child { margin-top: 0; }
+    .rank-row {
+      display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+      padding: 7px 8px; border-radius: 6px; cursor: pointer; border-bottom: 1px solid rgba(48,54,61,0.55);
+    }
+    .rank-row:hover { background: rgba(230,168,23,0.08); }
+    .rank-name { font-size: 13px; line-height: 1.35; }
+    .rank-name .tc { color: var(--muted); font-size: 12px; }
+    .rank-count { font-size: 12px; font-weight: 700; color: var(--gold); white-space: nowrap; }
+    .back-btn {
+      background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 8px;
+      font-size: 12px; padding: 5px 12px; cursor: pointer; font-family: 'Inter', sans-serif; margin-bottom: 14px;
+    }
+    .back-btn:hover { color: var(--text); border-color: var(--muted); }
+    .obj-head-title { font-size: 18px; font-weight: 700; line-height: 1.3; }
+    .obj-head-tc { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .obj-head-meta { font-size: 12px; color: var(--gold); margin: 8px 0 6px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+    .obj-row { padding: 9px 0; border-bottom: 1px solid rgba(48,54,61,0.6); }
+    .obj-title { font-size: 13px; line-height: 1.45; }
+    .obj-fonds { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .more-note { padding: 14px 0; font-size: 12px; color: var(--muted); text-align: center; }
+
+    .tooltip {
+      position: fixed; padding: 9px 13px; background: rgba(26,31,46,0.97);
+      border: 1px solid var(--border); border-radius: 8px; font-size: 12px;
+      pointer-events: none; opacity: 0; transition: opacity 0.12s; z-index: 200; max-width: 280px;
+    }
+    .tooltip .tt { font-weight: 600; color: var(--gold); margin-bottom: 2px; }
+    .tooltip .tm { color: var(--muted); line-height: 1.5; }
+
+    footer { padding: 14px 32px 22px; color: var(--muted); font-size: 12px; text-align: center; border-top: 1px solid var(--border); }
+    .loading { text-align: center; color: var(--muted); padding: 60px 0; font-size: 14px; }
+
+    @media (max-width: 900px) {
+      .layout { flex-direction: column; }
+      .map-area { padding: 14px 14px 6px; }
+      .sidebar { width: 100%; border-left: none; border-top: 1px solid var(--border); max-height: none; position: static; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Hong Kong Map — M+ Collection Archives</h1>
+    <div class="subtitle">The Hong Kong objects by district — districts named in object titles, shaded by object count</div>
+  </div>
+  <div class="nav-links">
+    <a href="./index.html">← Explorer</a>
+    <a href="./worldmap.html" class="gold-link">World Map</a>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="map-area">
+    <div id="mapHolder"><div class="loading" id="loadingMsg">Loading map…</div></div>
+    <div class="map-hint">Click a district to list its objects. Streets and buildings are listed in the panel — they are not pinned, as no verified coordinates exist for them.</div>
+  </div>
+  <aside class="sidebar" id="sidebar"></aside>
+</div>
+
+<footer>District boundaries: © Lands Department / DATA.GOV.HK — Hong Kong Administrative Boundaries dataset · Collection data: M+ (CC0)</footer>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+const tooltip = document.getElementById('tooltip');
+const sidebar = document.getElementById('sidebar');
+let hkData = null;
+let objectsByKey = {};
+
+function goldColor(count, max) {
+  const t = Math.log(1 + count) / Math.log(1 + max);
+  const r = Math.round(58 + (230 - 58) * t);
+  const g = Math.round(44 + (168 - 44) * t);
+  const b = Math.round(7 + (23 - 7) * t);
+  return `rgb(${r},${g},${b})`;
+}
+function fmt(n) { return n.toLocaleString('en-US'); }
+function showTooltip(title, body, x, y) {
+  tooltip.innerHTML = '';
+  const tt = document.createElement('div'); tt.className = 'tt'; tt.textContent = title;
+  const tm = document.createElement('div'); tm.className = 'tm'; tm.textContent = body;
+  tooltip.appendChild(tt); tooltip.appendChild(tm);
+  tooltip.style.opacity = '1';
+  tooltip.style.left = Math.min(x + 14, window.innerWidth - 290) + 'px';
+  tooltip.style.top = Math.min(y + 12, window.innerHeight - 110) + 'px';
+}
+function hideTooltip() { tooltip.style.opacity = '0'; }
+
+/* ---------- sidebar views ---------- */
+function renderLists() {
+  sidebar.innerHTML = '';
+  [['streets', 'Streets 街道'], ['buildings', 'Buildings 建築物']].forEach(([kind, heading]) => {
+    const h = document.createElement('h2');
+    h.textContent = heading;
+    sidebar.appendChild(h);
+    hkData[kind].forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'rank-row';
+      const name = document.createElement('span');
+      name.className = 'rank-name';
+      name.textContent = item.name_en || item.name_tc;
+      if (item.name_en && item.name_tc) {
+        const tc = document.createElement('span');
+        tc.className = 'tc';
+        tc.textContent = ' ' + item.name_tc;
+        name.appendChild(tc);
+      }
+      const count = document.createElement('span');
+      count.className = 'rank-count';
+      count.textContent = fmt(item.count);
+      row.appendChild(name); row.appendChild(count);
+      row.addEventListener('click', () =>
+        showObjects(item.key, item.name_en, item.name_tc, kind === 'streets' ? 'Street' : 'Building', item.count));
+      sidebar.appendChild(row);
+    });
+  });
+}
+
+function showObjects(key, nameEn, nameTc, levelLabel, count) {
+  sidebar.innerHTML = '';
+  const back = document.createElement('button');
+  back.className = 'back-btn';
+  back.textContent = '← Streets & Buildings';
+  back.addEventListener('click', renderLists);
+  sidebar.appendChild(back);
+
+  const title = document.createElement('div');
+  title.className = 'obj-head-title';
+  title.textContent = nameEn || nameTc;
+  sidebar.appendChild(title);
+  if (nameEn && nameTc) {
+    const tc = document.createElement('div');
+    tc.className = 'obj-head-tc';
+    tc.textContent = nameTc;
+    sidebar.appendChild(tc);
+  }
+  const meta = document.createElement('div');
+  meta.className = 'obj-head-meta';
+  meta.textContent = `${levelLabel} · ${fmt(count)} objects`;
+  sidebar.appendChild(meta);
+
+  const list = objectsByKey[key] || [];
+  const frag = document.createDocumentFragment();
+  list.slice(0, 200).forEach(o => {
+    const row = document.createElement('div');
+    row.className = 'obj-row';
+    const t = document.createElement('div');
+    t.className = 'obj-title';
+    t.textContent = o.title;
+    const f = document.createElement('div');
+    f.className = 'obj-fonds';
+    f.textContent = o.fonds;
+    row.appendChild(t); row.appendChild(f);
+    frag.appendChild(row);
+  });
+  sidebar.appendChild(frag);
+  if (list.length > 200) {
+    const more = document.createElement('div');
+    more.className = 'more-note';
+    more.textContent = `+ ${fmt(list.length - 200)} more objects`;
+    sidebar.appendChild(more);
+  }
+  sidebar.scrollTop = 0;
+}
+
+/* ---------- map ---------- */
+async function init() {
+  const [geo, data, objects] = await Promise.all([
+    fetch('./data/hk_districts.json').then(r => r.json()),
+    fetch('./data/map-hk.json').then(r => r.json()),
+    fetch('./data/map-hk-objects.json').then(r => r.json())
+  ]);
+  hkData = data;
+  objectsByKey = objects;
+
+  const counts = {};
+  data.districts.forEach(d => { counts[d.name_en] = d; });
+  const maxCount = Math.max(...data.districts.map(d => d.count));
+
+  // bounds
+  let minLng = 1e9, maxLng = -1e9, minLat = 1e9, maxLat = -1e9;
+  function scan(coords) {
+    if (typeof coords[0] === 'number') {
+      minLng = Math.min(minLng, coords[0]); maxLng = Math.max(maxLng, coords[0]);
+      minLat = Math.min(minLat, coords[1]); maxLat = Math.max(maxLat, coords[1]);
+    } else coords.forEach(scan);
+  }
+  geo.features.forEach(f => scan(f.geometry.coordinates));
+
+  const W = 1000, H = 640, PAD = 18;
+  const scale = Math.min((W - 2 * PAD) / (maxLng - minLng), (H - 2 * PAD) / (maxLat - minLat));
+  const offX = (W - (maxLng - minLng) * scale) / 2;
+  const offY = (H - (maxLat - minLat) * scale) / 2;
+  const X = lng => offX + (lng - minLng) * scale;
+  const Y = lat => offY + (maxLat - lat) * scale;
+
+  function ringPath(ring) {
+    return ring.map((pt, i) => `${i ? 'L' : 'M'}${X(pt[0]).toFixed(1)},${Y(pt[1]).toFixed(1)}`).join('') + 'Z';
+  }
+  function geomPath(geom) {
+    if (geom.type === 'Polygon') return geom.coordinates.map(ringPath).join('');
+    if (geom.type === 'MultiPolygon') return geom.coordinates.map(poly => poly.map(ringPath).join('')).join('');
+    return '';
+  }
+  function largestCentre(geom) {
+    const polys = geom.type === 'Polygon' ? [geom.coordinates] : geom.coordinates;
+    let best = null, bestArea = -1;
+    polys.forEach(poly => {
+      let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+      poly[0].forEach(pt => {
+        x0 = Math.min(x0, pt[0]); x1 = Math.max(x1, pt[0]);
+        y0 = Math.min(y0, pt[1]); y1 = Math.max(y1, pt[1]);
+      });
+      const area = (x1 - x0) * (y1 - y0);
+      if (area > bestArea) { bestArea = area; best = [(x0 + x1) / 2, (y0 + y1) / 2]; }
+    });
+    return [X(best[0]), Y(best[1])];
+  }
+
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('id', 'hkSvg');
+
+  geo.features.forEach(f => {
+    const nameEn = (f.properties.NAME_EN || '').replace(/ District$/, '');
+    const nameTc = f.properties.NAME_TC || '';
+    const rec = counts[nameEn];
+    const count = rec ? rec.count : 0;
+
+    const path = document.createElementNS(svgNS, 'path');
+    path.setAttribute('d', geomPath(f.geometry));
+    path.setAttribute('class', 'district');
+    path.setAttribute('fill-rule', 'evenodd');
+    path.style.fill = count > 0 ? goldColor(count, maxCount) : '#161b22';
+    path.addEventListener('mouseenter', e => {
+      showTooltip(`${nameEn} ${nameTc}`,
+        count > 0 ? `${fmt(count)} objects — click to list` : 'No objects in the archives data',
+        e.clientX, e.clientY);
+    });
+    path.addEventListener('mousemove', e => {
+      tooltip.style.left = Math.min(e.clientX + 14, window.innerWidth - 290) + 'px';
+      tooltip.style.top = Math.min(e.clientY + 12, window.innerHeight - 110) + 'px';
+    });
+    path.addEventListener('mouseleave', hideTooltip);
+    path.addEventListener('click', () => showObjects(nameEn, nameEn, nameTc, 'District', count));
+    svg.appendChild(path);
+
+    const [cx, cy] = largestCentre(f.geometry);
+    const t1 = document.createElementNS(svgNS, 'text');
+    t1.setAttribute('x', cx); t1.setAttribute('y', cy - 1);
+    t1.setAttribute('class', 'lbl-en' + (count ? '' : ' lbl-zero'));
+    t1.textContent = nameEn;
+    const t2 = document.createElementNS(svgNS, 'text');
+    t2.setAttribute('x', cx); t2.setAttribute('y', cy + 12);
+    t2.setAttribute('class', 'lbl-tc' + (count ? '' : ' lbl-zero'));
+    t2.textContent = nameTc;
+    svg.appendChild(t1); svg.appendChild(t2);
+  });
+
+  const holder = document.getElementById('mapHolder');
+  holder.innerHTML = '';
+  holder.appendChild(svg);
+
+  renderLists();
+}
+
+init().catch(err => {
+  document.getElementById('loadingMsg').textContent = 'Could not load map data: ' + err.message;
+});
+</script>
+</body>
+</html>
