@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tag View - M+ Collection</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0d1117;
+      --bg-secondary: #161b22;
+      --bg-card: #1a1f2e;
+      --border-color: #30363d;
+      --text-primary: #e6e8eb;
+      --text-secondary: #8b949e;
+      --text-muted: #6e7681;
+      --gold: #E6A817;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    a {
+      color: var(--gold);
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+
+    a:hover {
+      opacity: 0.8;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      padding: 20px 0;
+      box-shadow: 0 1px 8px rgba(230, 168, 23, 0.15);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+      color: var(--gold);
+      font-weight: 700;
+    }
+
+    .breadcrumb {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+    }
+
+    .breadcrumb a {
+      color: var(--gold);
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      background: rgba(230, 168, 23, 0.1);
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .breadcrumb a:hover {
+      background: rgba(230, 168, 23, 0.2);
+      transform: translateX(-2px);
+    }
+
+    main {
+      padding: 32px 0;
+    }
+
+    .tag-info {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+
+    .tag-title {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+    }
+
+    .tag-stats {
+      font-size: 14px;
+      color: var(--text-secondary);
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stat-value {
+      font-weight: 600;
+      color: var(--gold);
+    }
+
+    .object-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .object-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-left: 3px solid var(--gold);
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.3s ease-out;
+    }
+
+    .object-card:hover {
+      border-left-color: #f0b830;
+      border-color: var(--gold);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(230, 168, 23, 0.2);
+      background: rgba(26, 31, 46, 0.8);
+    }
+
+    .object-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+
+    .object-title-tc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    .object-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .object-meta-row {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 12px;
+    }
+
+    .object-meta-label {
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .error {
+      color: #ff6b6b;
+      padding: 16px;
+      background: rgba(255, 107, 107, 0.1);
+      border: 1px solid rgba(255, 107, 107, 0.3);
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 48px;
+      color: var(--text-secondary);
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border-color);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .tag-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background: rgba(230, 168, 23, 0.15);
+      border: 1px solid rgba(230, 168, 23, 0.3);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gold);
+      margin-right: 8px;
+    }
+
+    .sort-controls {
+      margin-top: 16px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .sort-btn {
+      padding: 6px 12px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .sort-btn:hover {
+      background: var(--bg-card);
+      border-color: var(--gold);
+      color: var(--text-primary);
+    }
+
+    .sort-btn.active {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: var(--bg-dark);
+      font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+      .object-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .tag-title {
+        font-size: 24px;
+      }
+
+      h1 {
+        font-size: 22px;
+      }
+
+      .tag-info {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>M+ Collection</h1>
+      <div class="breadcrumb">
+        <a href="./index.html">← Back to Explorer</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <div>Loading objects...</div>
+      </div>
+
+      <div id="content" style="display: none;">
+        <div class="tag-info">
+          <div class="tag-title" id="tagTitle">Loading...</div>
+          <div class="tag-stats">
+            <div class="stat">
+              <span>Artworks:</span>
+              <span class="stat-value" id="artworkCount">0</span>
+            </div>
+            <div class="stat">
+              <span>Type:</span>
+              <span class="stat-value" id="tagType">-</span>
+            </div>
+          </div>
+          <div class="sort-controls">
+            <span style="font-size: 12px; color: var(--text-muted); margin-right: 4px;">Sort by:</span>
+            <button class="sort-btn active" data-sort="default">Default</button>
+            <button class="sort-btn" data-sort="title">Title (A-Z)</button>
+            <button class="sort-btn" data-sort="date">Date</button>
+          </div>
+        </div>
+
+        <div class="object-grid" id="objectGrid"></div>
+      </div>
+
+      <div id="error" class="error" style="display: none;"></div>
+    </div>
+  </main>
+
+  <script>
+    function getQueryParam(name) {
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name);
+    }
+
+    function getQueryParams(name) {
+      const url = new URL(window.location.href);
+      return url.searchParams.getAll(name);
+    }
+
+    async function loadData() {
+      const cacheBust = `v=${Date.now()}`;
+      const [indexResp, fullResp] = await Promise.all([
+        fetch(`./data/museum-index.json?${cacheBust}`),
+        fetch(`./data/pulse.json?${cacheBust}`)
+      ]);
+      if (!indexResp.ok) throw new Error('Failed to load collection data');
+      const index = await indexResp.json();
+      if (fullResp.ok) {
+        let fullData = await fullResp.json();
+        // Filter to Sigg only if sigg=1 param
+        if (new URL(window.location.href).searchParams.get('sigg') === '1') {
+          fullData = fullData.filter(o => o.sigg);
+        }
+        index._fullObjects = fullData;
+      }
+      return index;
+    }
+
+    // Build artist name -> URL lookup
+    function buildArtistMap(data) {
+      const map = {};
+      if (data && data.artists) {
+        data.artists.forEach(a => {
+          if (a.name && a.mplusUrl) map[a.name] = a.mplusUrl;
+          if (a.nameTC && a.mplusUrl) map[a.nameTC] = a.mplusUrl;
+        });
+      }
+      return map;
+    }
+
+    function generateMplusSlug(name) {
+      return name
+        .toLowerCase()
+        .replace(/&/g, 'and')
+        .replace(/[()]/g, '')
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+    }
+
+    function artistLink(name, artistMap) {
+      const url = artistMap[name];
+      if (url) return `<a href="${url}" target="_blank" style="color:var(--gold);text-decoration:none;">${name}</a>`;
+      // Fallback: generate slug-based M+ URL
+      const slug = generateMplusSlug(name);
+      if (slug) {
+        const fallbackUrl = `https://www.mplus.org.hk/en/collection/makers/${slug}/`;
+        return `<a href="${fallbackUrl}" target="_blank" style="color:var(--gold);text-decoration:none;">${name}</a>`;
+      }
+      return name;
+    }
+
+    function sortObjects(objects, sortBy) {
+      if (sortBy === 'title') {
+        return objects.sort((a, b) => {
+          const titleA = (a.title || 'Untitled').toLowerCase();
+          const titleB = (b.title || 'Untitled').toLowerCase();
+          return titleA.localeCompare(titleB);
+        });
+      } else if (sortBy === 'date') {
+        return objects.sort((a, b) => {
+          // Extract year from date string (e.g., "1990" or "1990-2000")
+          const yearA = a.date ? parseInt(a.date.match(/\d{4}/)?.[0] || '0') : 0;
+          const yearB = b.date ? parseInt(b.date.match(/\d{4}/)?.[0] || '0') : 0;
+          return yearB - yearA; // Newest first
+        });
+      }
+      return objects; // default order
+    }
+
+    let currentObjects = [];
+    let currentTag = null;
+
+    function renderObjects(category, data, sortBy = 'default') {
+      const isSigg = new URL(window.location.href).searchParams.get('sigg') === '1';
+      // Look up tag from siggTags first in sigg mode, then fall back to tags
+      const tag = isSigg
+        ? (data.siggTags || []).find(t => t.id === category) || data.tags.find(t => t.id === category)
+        : data.tags.find(t => t.id === category);
+      
+      // Use full objects from pulse.json if available, filter by category
+      let objects;
+
+      // For movement/group tags in sigg mode, use siggObjectsByTag directly
+      if (isSigg && data.siggObjectsByTag && data.siggObjectsByTag[category]) {
+        objects = data.siggObjectsByTag[category];
+      } else if (data._fullObjects) {
+        objects = data._fullObjects.filter(o => {
+          // Match against all fields: area, category, medium, nationality, decade
+          if (o.area === category || o.category === category ||
+              o.medium === category || o.decade === category ||
+              o.nationality === category || o.artistName === category) return true;
+          // Also check arrays
+          if (o.areas && o.areas.includes(category)) return true;
+          if (o.categories && o.categories.includes(category)) return true;
+          return false;
+        }).map(o => ({
+          id: o.id,
+          title: o.title,
+          titleTC: o.titleTC,
+          areas: o.areas || [o.area].filter(Boolean),
+          categories: o.categories || [o.category].filter(Boolean),
+          medium: o.medium,
+          date: o.year ? String(o.year) : '',
+          artistName: o.artistName,
+          nationality: o.nationality || ''
+        }));
+      } else {
+        objects = (isSigg && data.siggObjectsByTag ? data.siggObjectsByTag[category] : null) || data.objectsByTag[category] || [];
+      }
+
+      currentTag = tag;
+      currentObjects = objects;
+
+      // Update tag info
+      document.getElementById('tagTitle').textContent = category;
+
+      const displayCount = objects.length;
+
+      document.getElementById('artworkCount').textContent = displayCount;
+      document.getElementById('tagType').textContent = tag ? tag.type : 'unknown';
+
+      // Sort objects
+      objects = sortObjects([...objects], sortBy);
+
+      // Render object cards
+      const grid = document.getElementById('objectGrid');
+      grid.innerHTML = '';
+      const oldBtn = document.getElementById('loadMoreBtn');
+      if (oldBtn) oldBtn.remove();
+
+      if (objects.length === 0) {
+        grid.innerHTML = '<div class="error">No objects found for this tag.</div>';
+        return;
+      }
+
+      let displayedCount = 0;
+      const PAGE_SIZE = 100;
+      const sortedObjects = sortObjects([...objects], sortBy);
+      const artistMap = buildArtistMap(data);
+
+      function renderBatch() {
+        const batch = sortedObjects.slice(displayedCount, displayedCount + PAGE_SIZE);
+        batch.forEach(obj => {
+          const card = document.createElement('div');
+          card.className = 'object-card';
+
+        const title = document.createElement('div');
+        title.className = 'object-title';
+        title.textContent = obj.title || 'Untitled';
+        card.appendChild(title);
+
+        if (obj.titleTC) {
+          const titleTC = document.createElement('div');
+          titleTC.className = 'object-title-tc';
+          titleTC.textContent = obj.titleTC;
+          card.appendChild(titleTC);
+        }
+
+        const meta = document.createElement('div');
+        meta.className = 'object-meta';
+
+        if (obj.date) {
+          const row = document.createElement('div');
+          row.className = 'object-meta-row';
+          row.innerHTML = `
+            <span class="object-meta-label">Date</span>
+            <span>${obj.date}</span>
+          `;
+          meta.appendChild(row);
+        }
+
+        if (obj.artistName) {
+          const row = document.createElement('div');
+          row.className = 'object-meta-row';
+          const linkedName = artistLink(obj.artistName, artistMap);
+          const artistDisplay = obj.artistNameTC
+            ? `${linkedName} (${obj.artistNameTC})`
+            : linkedName;
+          row.innerHTML = `
+            <span class="object-meta-label">Artist</span>
+            <span>${artistDisplay}</span>
+          `;
+          meta.appendChild(row);
+        }
+
+        if (obj.nationality) {
+          const row = document.createElement('div');
+          row.className = 'object-meta-row';
+          row.innerHTML = `
+            <span class="object-meta-label">Country</span>
+            <span>${obj.nationality}</span>
+          `;
+          meta.appendChild(row);
+        }
+
+        if (obj.medium) {
+          const row = document.createElement('div');
+          row.className = 'object-meta-row';
+          row.innerHTML = `
+            <span class="object-meta-label">Medium</span>
+            <span>${obj.medium}</span>
+          `;
+          meta.appendChild(row);
+        }
+
+        if (obj.areas && obj.areas.length > 0) {
+          const row = document.createElement('div');
+          row.className = 'object-meta-row';
+          row.innerHTML = `
+            <span class="object-meta-label">Area</span>
+            <span>${obj.areas.join(', ')}</span>
+          `;
+          meta.appendChild(row);
+        }
+
+        if (obj.categories && obj.categories.length > 0) {
+          const row = document.createElement('div');
+          row.className = 'object-meta-row';
+          row.innerHTML = `
+            <span class="object-meta-label">Categories</span>
+            <span>${obj.categories.slice(0, 3).join(', ')}</span>
+          `;
+          meta.appendChild(row);
+        }
+
+        card.appendChild(meta);
+        grid.appendChild(card);
+      });
+        displayedCount += batch.length;
+
+        // Remove old load-more button
+        const oldBtn = document.getElementById('loadMoreBtn');
+        if (oldBtn) oldBtn.remove();
+
+        // Add load more if needed
+        if (displayedCount < sortedObjects.length) {
+          const btn = document.createElement('button');
+          btn.id = 'loadMoreBtn';
+          btn.textContent = `Load more (${displayedCount}/${sortedObjects.length})`;
+          btn.style.cssText = 'display:block;margin:20px auto;padding:10px 24px;background:var(--gold);color:var(--bg-dark);border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;';
+          btn.addEventListener('click', renderBatch);
+          grid.after(btn);
+        }
+      }
+      renderBatch();
+    }
+
+    function renderMultiTag(tags, data) {
+      const isSigg = new URL(window.location.href).searchParams.get('sigg') === '1';
+
+      // If single tag in sigg mode and it's a movement/group, delegate to renderObjects
+      if (tags.length === 1 && isSigg && data.siggObjectsByTag && data.siggObjectsByTag[tags[0]]) {
+        renderObjects(tags[0], data);
+        return;
+      }
+
+      if (!data._fullObjects) {
+        document.getElementById('error').textContent = 'Full data not available';
+        document.getElementById('error').style.display = 'block';
+        return;
+      }
+
+      // Build lookup sets from siggObjectsByTag for movement/group tags
+      const siggIdSets = {};
+      if (isSigg && data.siggObjectsByTag) {
+        tags.forEach(tag => {
+          if (data.siggObjectsByTag[tag]) {
+            siggIdSets[tag] = new Set(data.siggObjectsByTag[tag].map(o => o.id));
+          }
+        });
+      }
+
+      // Cross-filter: AND across tags
+      const objects = data._fullObjects.filter(o => {
+        return tags.every(tag => {
+          // Check siggObjectsByTag lookup first (for movement/group tags)
+          if (siggIdSets[tag]) return siggIdSets[tag].has(o.id);
+          return o.area === tag || o.category === tag ||
+                 o.medium === tag || o.decade === tag ||
+                 o.nationality === tag ||
+                 (o.areas && o.areas.includes(tag)) ||
+                 (o.categories && o.categories.includes(tag));
+        });
+      }).map(o => ({
+        id: o.id,
+        title: o.title,
+        titleTC: o.titleTC,
+        areas: o.areas || [o.area].filter(Boolean),
+        categories: o.categories || [o.category].filter(Boolean),
+        medium: o.medium,
+        date: o.year ? String(o.year) : '',
+        artistName: o.artistName,
+        nationality: o.nationality || ''
+      }));
+
+      document.getElementById('tagTitle').textContent = tags.join(' + ');
+      document.getElementById('artworkCount').textContent = objects.length.toLocaleString();
+      document.getElementById('tagType').textContent = 'Cross-filter';
+
+      currentObjects = objects;
+
+      const grid = document.getElementById('objectGrid');
+      grid.innerHTML = '';
+      const oldBtn = document.getElementById('loadMoreBtn');
+      if (oldBtn) oldBtn.remove();
+
+      if (objects.length === 0) {
+        grid.innerHTML = '<div class="error">No objects match all selected tags.</div>';
+        return;
+      }
+
+      let displayedCount = 0;
+      const PAGE_SIZE = 100;
+      const sortedObjects = objects;
+      const artistMap = buildArtistMap(data);
+
+      function renderBatch() {
+        const batch = sortedObjects.slice(displayedCount, displayedCount + PAGE_SIZE);
+        batch.forEach(obj => {
+          const card = document.createElement('div');
+          card.className = 'object-card';
+          const titleEl = document.createElement('div');
+          titleEl.className = 'object-title';
+          titleEl.textContent = obj.title || 'Untitled';
+          card.appendChild(titleEl);
+          if (obj.titleTC) {
+            const tc = document.createElement('div');
+            tc.className = 'object-title-tc';
+            tc.textContent = obj.titleTC;
+            card.appendChild(tc);
+          }
+          const meta = document.createElement('div');
+          meta.className = 'object-meta';
+          [['Date', obj.date], ['Artist', obj.artistName], ['Country', obj.nationality], ['Medium', obj.medium]].forEach(([label, val]) => {
+            if (val) {
+              const row = document.createElement('div');
+              row.className = 'object-meta-row';
+              if (label === 'Artist') {
+                row.innerHTML = `<span class="object-meta-label">${label}</span><span>${artistLink(val, artistMap)}</span>`;
+              } else {
+                row.innerHTML = `<span class="object-meta-label">${label}</span><span>${val}</span>`;
+              }
+              meta.appendChild(row);
+            }
+          });
+          card.appendChild(meta);
+          grid.appendChild(card);
+        });
+        displayedCount += batch.length;
+        const old = document.getElementById('loadMoreBtn');
+        if (old) old.remove();
+        if (displayedCount < sortedObjects.length) {
+          const btn = document.createElement('button');
+          btn.id = 'loadMoreBtn';
+          btn.textContent = `Load more (${displayedCount}/${sortedObjects.length})`;
+          btn.style.cssText = 'display:block;margin:20px auto;padding:10px 24px;background:var(--gold);color:var(--bg-dark);border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;';
+          btn.addEventListener('click', renderBatch);
+          grid.after(btn);
+        }
+      }
+      renderBatch();
+    }
+
+    async function init() {
+      const category = getQueryParam('category');
+      const multiTags = getQueryParams('tag');
+
+      if (!category && multiTags.length === 0) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error').textContent = 'Missing category parameter';
+        return;
+      }
+
+      try {
+        const data = await loadData();
+        
+        if (multiTags.length > 0) {
+          // Multi-tag cross filter mode
+          renderMultiTag(multiTags, data);
+        } else {
+          renderObjects(category, data);
+        }
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('content').style.display = 'block';
+
+        // Setup sort buttons
+        document.querySelectorAll('.sort-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const sortBy = btn.dataset.sort;
+            renderObjects(category, data, sortBy);
+          });
+        });
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error').textContent = `Error: ${error.message}`;
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>
