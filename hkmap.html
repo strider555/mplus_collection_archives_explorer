@@ -64,6 +64,9 @@
     }
     .sidebar h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--gold); margin: 14px 0 6px; }
     .sidebar h2:first-child { margin-top: 0; }
+    .sidebar h2.district-group { cursor: pointer; user-select: none; }
+    .grp-arrow { display: inline-block; width: 14px; color: var(--muted); font-size: 10px; }
+    .place-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; flex: none; align-self: center; }
     .rank-row {
       display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
       padding: 7px 8px; border-radius: 6px; cursor: pointer; border-bottom: 1px solid rgba(48,54,61,0.55);
@@ -193,13 +196,41 @@ function hideTooltip() { tooltip.style.opacity = '0'; }
 /* ---------- sidebar views (unchanged from the first version) ---------- */
 function renderLists() {
   sidebar.innerHTML = '';
-  [['streets', 'Streets 街道'], ['buildings', 'Buildings 建築物']].forEach(([kind, heading]) => {
-    const h = document.createElement('h2');
-    h.textContent = heading;
-    sidebar.appendChild(h);
+  const groups = new Map();
+  [['streets', 'Street'], ['buildings', 'Building']].forEach(([kind, label]) => {
     hkData[kind].forEach(item => {
+      const dn = item.district || 'Other';
+      if (!groups.has(dn)) groups.set(dn, []);
+      groups.get(dn).push({ item, kind, label });
+    });
+  });
+  const order = hkData.districts.map(d => d.name_en);
+  const names = [...groups.keys()].sort((a, b) => {
+    const ia = order.indexOf(a), ib = order.indexOf(b);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+  });
+  names.forEach(dn => {
+    const d = hkData.districts.find(x => x.name_en === dn);
+    const items = groups.get(dn).slice().sort((a, b) => b.item.count - a.item.count);
+    const h = document.createElement('h2');
+    h.className = 'district-group';
+    const arrow = document.createElement('span');
+    arrow.className = 'grp-arrow'; arrow.textContent = '▾';
+    h.appendChild(arrow);
+    h.appendChild(document.createTextNode(`${dn}${d && d.name_tc ? ' ' + d.name_tc : ''} · ${items.length}`));
+    const box = document.createElement('div');
+    h.addEventListener('click', () => {
+      const closed = box.style.display === 'none';
+      box.style.display = closed ? '' : 'none';
+      arrow.textContent = closed ? '▾' : '▸';
+    });
+    sidebar.appendChild(h);
+    items.forEach(({ item, kind, label }) => {
       const row = document.createElement('div');
       row.className = 'rank-row';
+      const dot = document.createElement('span');
+      dot.className = 'place-dot';
+      dot.style.background = kind === 'streets' ? '#4ecdc4' : '#ff6b6b';
       const name = document.createElement('span');
       name.className = 'rank-name';
       name.textContent = item.name_en || item.name_tc;
@@ -212,11 +243,12 @@ function renderLists() {
       const count = document.createElement('span');
       count.className = 'rank-count';
       count.textContent = fmt(item.count);
-      row.appendChild(name); row.appendChild(count);
+      row.appendChild(dot); row.appendChild(name); row.appendChild(count);
       row.addEventListener('click', () =>
-        showObjects(item.key, item.name_en, item.name_tc, kind === 'streets' ? 'Street' : 'Building', item.count));
-      sidebar.appendChild(row);
+        showObjects(item.key, item.name_en, item.name_tc, label, item.count));
+      box.appendChild(row);
     });
+    sidebar.appendChild(box);
   });
 }
 
@@ -492,7 +524,7 @@ function largestCentre(geom) {
 async function init() {
   const [geo, data, objects, pinsData, style, links, images] = await Promise.all([
     fetch('./data/hk_districts.json').then(r => r.json()),
-    fetch('./data/map-hk.json?v=2').then(r => r.json()),
+    fetch('./data/map-hk.json?v=3').then(r => r.json()),
     fetch('./data/map-hk-objects.json?v=2').then(r => r.json()),
     fetch('./data/map-hk-pins.json?v=2').then(r => r.json()),
     buildStyle(),
