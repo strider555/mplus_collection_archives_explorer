@@ -1350,3 +1350,8 @@ html, body {
 .stats-strip b { color:var(--gold); font-size:16px; }
 .empty { padding:30px 24px; color:var(--text-muted); }
 a.ext { color:var(--gold); }
+
+/* Archives explorer: document-flow page — allow the page itself to scroll
+   (the base stylesheet locks html/body for the original app's internal panels) */
+html, body { height: auto; overflow: visible; }
+body { overflow-y: auto; }
