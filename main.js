@@ -17,6 +17,7 @@ let creditsData = {}; // objectId -> [[name, nameTC, role, roleTC], ...] (sideca
 let mlscData = null; // M+ Library Special Collection artists [{name, nameTC, count}]
 let archivesData = null; // M+ Collection Archives [{name, ca, count, url, objects:[ids]}]
 let mplusLinks = {}; // id -> {u: official M+ page URL, n: objectNumber} (matched from the M+ sitemap)
+let mplusImages = {}; // id -> 1 when the record's M+ page shows an image (swept 2026-11-25)
 let objectById = new Map(); // fullObjects lookup by id
 let currentGraph = null;
 let currentFilter = 'all';
@@ -246,6 +247,11 @@ async function loadCreditsAndPatches() {
     const resp = await fetch('./data/mplus-links.json?v=2');
     if (resp.ok) mplusLinks = await resp.json();
   } catch (e) { console.warn('mplus links not available'); }
+
+  try {
+    const resp = await fetch('./data/mplus-images.json?v=1');
+    if (resp.ok) mplusImages = await resp.json();
+  } catch (e) { console.warn('mplus images not available'); }
 }
 
 // Initialize graph
@@ -937,7 +943,9 @@ function showArchivePanel(archiveName) {
         const num = document.createElement('span');
         num.className = 'tree-num';
         num.textContent = node.code;
-        body.appendChild(badge); body.appendChild(title); body.appendChild(num);
+        body.appendChild(badge); body.appendChild(title);
+        if ((node.level === 'Item' || node.level === 'File' || node.level === 'Piece') && (mplusImages[node.obj.id] || mplusImages[String(node.obj.id)])) { const ic = document.createElement('span'); ic.className = 'img-ic'; ic.textContent = ' \u{1F5BC}\uFE0F'; ic.title = 'Image available on the M+ website'; body.appendChild(ic); }
+        body.appendChild(num);
         if (node.obj.titleTC) {
           const tc = document.createElement('div');
           tc.className = 'tree-title-tc';
@@ -1013,7 +1021,9 @@ function showArtworkPanel(artworkId) {
 
   // Update title
   const titleText = artwork.titleTC ? `${artwork.title} (${artwork.titleTC})` : artwork.title;
-  document.getElementById('panelTitle').textContent = titleText;
+  const lkImg = mplusLinks[artwork.id] || mplusLinks[String(artwork.id)];
+  const showImgIc = lkImg && (mplusImages[artwork.id] || mplusImages[String(artwork.id)]) && (lkImg.l === 'Item' || lkImg.l === 'File' || lkImg.l === 'Piece');
+  document.getElementById('panelTitle').textContent = titleText + (showImgIc ? ' \u{1F5BC}\uFE0F' : '');
   document.getElementById('panelTypeLabel').textContent = artwork.artistName || 'Unknown Artist';
 
   // Update summary

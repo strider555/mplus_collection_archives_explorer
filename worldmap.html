@@ -61,6 +61,8 @@
       paint-order: stroke; stroke: #0d1117; stroke-width: 3.5px; pointer-events: none;
     }
 
+    #mapHolder svg g.country-hl path { stroke: #ffffff; stroke-width: 1.5; }
+    .pin-hl { fill: none; stroke: #ffffff; pointer-events: none; }
     .zoom-controls { position: absolute; top: 26px; left: 34px; display: flex; flex-direction: column; gap: 6px; z-index: 50; }
     .zoom-controls button {
       width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border);
@@ -178,6 +180,7 @@ const tooltip = document.getElementById('tooltip');
 const panel = document.getElementById('panel');
 let objectsByLocation = {};
 let mplusLinks = {}; // id -> {u: official M+ page URL, n: objectNumber}
+let mplusImages = {}; // id -> 1 when the M+ page shows an image
 
 function goldColor(count, max) {
   const t = Math.log(1 + count) / Math.log(1 + max);
@@ -260,6 +263,7 @@ function renderObjTree(container, list) {
       const lk = mplusLinks[node.o.id];
       if (lk) { const a = document.createElement('a'); a.href = lk.u; a.target = '_blank'; a.rel = 'noopener'; a.textContent = node.o.title + ' \u2197'; t.appendChild(a); }
       else t.appendChild(document.createTextNode(node.o.title));
+      if (lk && mplusImages[node.o.id] && (lk.l === 'Item' || lk.l === 'File' || lk.l === 'Piece')) { const ic = document.createElement('span'); ic.className = 'img-ic'; ic.textContent = ' \u{1F5BC}\uFE0F'; ic.title = 'Image available on the M+ website'; t.appendChild(ic); }
       const f = document.createElement('div'); f.className = 'obj-fonds';
       f.textContent = node.code + ' \u00b7 ' + node.o.fonds;
       main.appendChild(t); main.appendChild(f);
@@ -419,19 +423,21 @@ function openPanel(nameEn, nameTc, levelLabel, count) {
   content.scrollTop = 0;
   panel.classList.add('open');
 }
-function closePanel() { panel.classList.remove('open'); }
+function closePanel() { panel.classList.remove('open'); if (window.__clearMapHL) window.__clearMapHL(); }
 document.getElementById('panelClose').addEventListener('click', closePanel);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
 
 async function init() {
-  const [svgText, world, objects, links] = await Promise.all([
+  const [svgText, world, objects, links, images] = await Promise.all([
     fetch('./assets/world-states.svg').then(r => r.text()),
     fetch('./data/map-world.json').then(r => r.json()),
     fetch('./data/map-world-objects.json').then(r => r.json()),
-    fetch('./data/mplus-links.json?v=2').then(r => r.json()).catch(() => ({}))
+    fetch('./data/mplus-links.json?v=2').then(r => r.json()).catch(() => ({})),
+    fetch('./data/mplus-images.json?v=1').then(r => r.json()).catch(() => ({}))
   ]);
   objectsByLocation = objects;
   mplusLinks = links;
+  mplusImages = images;
 
   const holder = document.getElementById('mapHolder');
   holder.innerHTML = svgText;
@@ -459,7 +465,7 @@ async function init() {
     // stopPropagation: in this SVG some country groups nest inside others
     // (Taiwan's group sits inside China's), and a click would otherwise
     // bubble up and let the outer country's handler overwrite the panel.
-    g.addEventListener('click', e => { e.stopPropagation(); openPanel(c.name_en, c.name_tc, 'Country', c.count); try { const b = g.getBBox(); animateViewTo(b.x + b.width / 2, b.y + b.height / 2, Math.max(130, b.width * 1.35)); } catch (_) {} });
+    g.addEventListener('click', e => { e.stopPropagation(); openPanel(c.name_en, c.name_tc, 'Country', c.count); try { const b = g.getBBox(); animateViewTo(b.x + b.width / 2, b.y + b.height / 2, Math.max(130, b.width * 1.35)); } catch (_) {} setCountryHL(g); hidePinHL(); });
   });
 
   // Remove the base map's locator rings around micro-island nations —
@@ -491,9 +497,19 @@ async function init() {
     });
     circle.addEventListener('mousemove', e => showTooltip(tooltip.innerHTML, e.clientX, e.clientY));
     circle.addEventListener('mouseleave', hideTooltip);
-    circle.addEventListener('click', () => { openPanel(p.name_en, p.name_tc, p.level === 'city' ? 'City' : 'Province / State', p.count); animateViewTo(p.x, p.y, 330); });
+    circle.addEventListener('click', () => { openPanel(p.name_en, p.name_tc, p.level === 'city' ? 'City' : 'Province / State', p.count); animateViewTo(p.x, p.y, 330); setPinHL(p, r); hideCountryHL(); });
     overlay.appendChild(circle);
   });
+
+  const hlRing = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  hlRing.setAttribute('class', 'pin-hl'); hlRing.dataset.baseR = '10'; hlRing.style.display = 'none';
+  overlay.appendChild(hlRing);
+  function setPinHL(pin, baseR) { hlRing.dataset.baseR = baseR + 4; hlRing.setAttribute('cx', pin.x); hlRing.setAttribute('cy', pin.y); hlRing.style.display = ''; applyView(); }
+  function hidePinHL() { hlRing.style.display = 'none'; }
+  let hlCountryG = null;
+  function setCountryHL(g) { if (hlCountryG) hlCountryG.classList.remove('country-hl'); hlCountryG = g; g.classList.add('country-hl'); }
+  function hideCountryHL() { if (hlCountryG) { hlCountryG.classList.remove('country-hl'); hlCountryG = null; } }
+  window.__clearMapHL = () => { hidePinHL(); hideCountryHL(); };
 
   // Hong Kong special marker → Hong Kong Map
   const hk = world.hkMarker;
@@ -566,6 +582,8 @@ async function init() {
       c.setAttribute('r', (parseFloat(c.dataset.baseR) / k).toFixed(2));
       c.style.strokeWidth = (0.9 / k).toFixed(2);
     });
+    const hlC = overlay.querySelector('circle.pin-hl');
+    if (hlC && hlC.style.display !== 'none') { hlC.setAttribute('r', (parseFloat(hlC.dataset.baseR) / k).toFixed(2)); hlC.style.strokeWidth = (2.4 / k).toFixed(2); }
     hkGroup.setAttribute('transform',
       `translate(${hk.x} ${hk.y}) scale(${(1 / k).toFixed(4)}) translate(${-hk.x} ${-hk.y})`);
   }
@@ -640,7 +658,7 @@ async function init() {
     zoomAt(r.left + r.width / 2, r.top + r.height / 2, 1.47);
   });
   document.getElementById('zoomReset').addEventListener('click', () => {
-    view = { ...FULL }; applyView();
+    view = { ...FULL }; applyView(); hidePinHL(); hideCountryHL();
   });
 }
 

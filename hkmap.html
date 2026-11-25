@@ -72,6 +72,7 @@
     .rank-name { font-size: 13px; line-height: 1.35; }
     .rank-name .tc { color: var(--muted); font-size: 12px; }
     .rank-count { font-size: 12px; font-weight: 700; color: var(--gold); white-space: nowrap; }
+    .hl-ring { width: 46px; height: 46px; border: 3px solid #ffffff; border-radius: 50%; box-shadow: 0 0 0 2px rgba(0,0,0,.5), 0 0 16px rgba(255,255,255,.4); pointer-events: none; }
     .back-btn {
       background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 8px;
       font-size: 12px; padding: 5px 12px; cursor: pointer; font-family: 'Inter', sans-serif; margin-bottom: 14px;
@@ -156,6 +157,15 @@ let hkData = null;
 let objectsByKey = {};
 let pinList = [];
 let mplusLinks = {}; // id -> {u: official M+ page URL, n: objectNumber}
+let mplusImages = {}; // id -> 1 when the M+ page shows an image
+let hkMapRef = null, hlMarker = null;
+function setHLMarker(lng, lat) {
+  if (!hkMapRef) return;
+  if (!hlMarker) { const el = document.createElement('div'); el.className = 'hl-ring'; hlMarker = new maplibregl.Marker({ element: el, anchor: 'center' }); }
+  hlMarker.setLngLat([lng, lat]).addTo(hkMapRef);
+}
+function clearHLMarker() { if (hlMarker) hlMarker.remove(); }
+function setDistrictHL(name) { if (hkMapRef && hkMapRef.getLayer('district-hl')) hkMapRef.setFilter('district-hl', ['==', ['get', 'name_en2'], name || '__none__']); }
 let flyToPoint = null, flyToBounds = null; // set once the map exists
 
 const BASE_STYLE_URL = 'https://mapapi.hkmapservice.gov.hk/gs/api/v1.0.0/vt/basemap/WGS84/resources/styles/root_dark.json';
@@ -273,6 +283,7 @@ function renderObjTree(container, list) {
       const lk = mplusLinks[node.o.id];
       if (lk) { const a = document.createElement('a'); a.href = lk.u; a.target = '_blank'; a.rel = 'noopener'; a.textContent = node.o.title + ' \u2197'; t.appendChild(a); }
       else t.appendChild(document.createTextNode(node.o.title));
+      if (lk && mplusImages[node.o.id] && (lk.l === 'Item' || lk.l === 'File' || lk.l === 'Piece')) { const ic = document.createElement('span'); ic.className = 'img-ic'; ic.textContent = ' \u{1F5BC}\uFE0F'; ic.title = 'Image available on the M+ website'; t.appendChild(ic); }
       const f = document.createElement('div'); f.className = 'obj-fonds';
       f.textContent = node.code + ' \u00b7 ' + node.o.fonds;
       main.appendChild(t); main.appendChild(f);
@@ -293,7 +304,7 @@ function showObjects(key, nameEn, nameTc, levelLabel, count, extraKeys) {
   const back = document.createElement('button');
   back.className = 'back-btn';
   back.textContent = '← Streets & Buildings';
-  back.addEventListener('click', renderLists);
+  back.addEventListener('click', () => { clearHLMarker(); setDistrictHL(null); renderLists(); });
   sidebar.appendChild(back);
 
   const title = document.createElement('div');
@@ -313,6 +324,7 @@ function showObjects(key, nameEn, nameTc, levelLabel, count, extraKeys) {
 
   const pin = (typeof pinList !== 'undefined' ? pinList : []).find(pn => pn.keys && pn.keys.includes(key));
   if (pin && flyToPoint) flyToPoint(pin.lng, pin.lat, 14.5);
+  if (pin) { setHLMarker(pin.lng, pin.lat); setDistrictHL(null); }
   let list = (objectsByKey[key] || []).slice();
   if (extraKeys && extraKeys.length) {
     const seen = new Set(list.map(o => o.title + '|' + o.fonds));
@@ -478,17 +490,19 @@ function largestCentre(geom) {
 
 /* ---------- map ---------- */
 async function init() {
-  const [geo, data, objects, pinsData, style, links] = await Promise.all([
+  const [geo, data, objects, pinsData, style, links, images] = await Promise.all([
     fetch('./data/hk_districts.json').then(r => r.json()),
     fetch('./data/map-hk.json').then(r => r.json()),
     fetch('./data/map-hk-objects.json').then(r => r.json()),
     fetch('./data/map-hk-pins.json').then(r => r.json()),
     buildStyle(),
-    fetch('./data/mplus-links.json?v=2').then(r => r.json()).catch(() => ({}))
+    fetch('./data/mplus-links.json?v=2').then(r => r.json()).catch(() => ({})),
+    fetch('./data/mplus-images.json?v=1').then(r => r.json()).catch(() => ({}))
   ]);
   hkData = data;
   objectsByKey = objects;
   mplusLinks = links;
+  mplusImages = images;
   pinList = pinsData.pins || [];
 
   const counts = {};
@@ -576,6 +590,11 @@ async function init() {
       id: 'district-line', type: 'line', source: 'districts',
       paint: { 'line-color': 'rgba(230,168,23,0.55)', 'line-width': 1 }
     });
+    map.addLayer({
+      id: 'district-hl', type: 'line', source: 'districts',
+      filter: ['==', ['get', 'name_en2'], '__none__'],
+      paint: { 'line-color': '#ffffff', 'line-width': 3, 'line-opacity': 0.95 }
+    });
     // Fade the gold district wash progressively as the user zooms in, so
     // street-level labels stay readable; full strength at the wide view.
     const fadeFill = () => {
@@ -617,6 +636,7 @@ async function init() {
 
     const pinAt = e => map.queryRenderedFeatures(e.point, { layers: ['pin-street', 'pin-building'] });
 
+    hkMapRef = map;
     flyToPoint = (lng, lat, zoom) => map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), zoom), duration: 1100 });
     flyToBounds = b => map.fitBounds(b, { padding: 50, duration: 1100, maxZoom: 13.5 });
     map.on('click', 'district-fill', e => {
@@ -626,6 +646,7 @@ async function init() {
       const bb = [[Infinity, Infinity], [-Infinity, -Infinity]];
       (function walk(c) { if (typeof c[0] === 'number') { bb[0][0] = Math.min(bb[0][0], c[0]); bb[0][1] = Math.min(bb[0][1], c[1]); bb[1][0] = Math.max(bb[1][0], c[0]); bb[1][1] = Math.max(bb[1][1], c[1]); } else c.forEach(walk); })(e.features[0].geometry.coordinates);
       if (flyToBounds) flyToBounds(bb);
+      setDistrictHL(p.name_en2); clearHLMarker();
     });
     ['pin-street', 'pin-building'].forEach(id => {
       map.on('click', id, e => {
@@ -634,6 +655,7 @@ async function init() {
         showObjects(keys[0], p.name_en, p.name_tc, p.level === 'street' ? 'Street' : 'Building', p.count, keys.slice(1));
         const gc = e.features[0].geometry.coordinates;
         if (flyToPoint) flyToPoint(gc[0], gc[1], 15.5);
+        setHLMarker(gc[0], gc[1]); setDistrictHL(null);
       });
       map.on('mouseenter', id, () => { map.getCanvas().style.cursor = 'pointer'; });
       map.on('mouseleave', id, () => { map.getCanvas().style.cursor = ''; hideTooltip(); });
