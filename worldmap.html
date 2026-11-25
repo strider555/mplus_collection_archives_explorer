@@ -327,6 +327,7 @@ function renderWorldTree(container, list) {
     const lk = mplusLinks[node.o.id];
     if (lk) { const a = document.createElement('a'); a.href = lk.u; a.target = '_blank'; a.rel = 'noopener'; a.textContent = node.o.title + ' \u2197'; t.appendChild(a); }
     else t.appendChild(document.createTextNode(node.o.title));
+    if (lk && mplusImages[node.o.id] && (lk.l === 'Item' || lk.l === 'File' || lk.l === 'Piece')) { const ic = document.createElement('span'); ic.className = 'img-ic'; ic.textContent = ' \u{1F5BC}\uFE0F'; ic.title = 'Image available on the M+ website'; t.appendChild(ic); }
     const f = document.createElement('div'); f.className = 'obj-fonds';
     f.textContent = node.code + ' \u00b7 ' + node.o.fonds;
     main.appendChild(t); main.appendChild(f);
@@ -556,25 +557,14 @@ async function init() {
   }
   let viewAnim = null, animToken = 0;
   function animateViewTo(cx, cy, targetW) {
-    const from = { ...view };
+    // Instant jump (no rAF tween): the tween intermittently never landed in
+    // throttled tabs, leaving the view unchanged. A direct set always lands.
+    if (viewAnim) { cancelAnimationFrame(viewAnim); viewAnim = null; }
+    animToken++;
     const w = Math.min(FULL.w, Math.max(90, targetW));
     const h = w * FULL.h / FULL.w;
-    const to = { w, h, x: cx - w / 2, y: cy - h / 2 };
-    if (viewAnim) cancelAnimationFrame(viewAnim);
-    const token = ++animToken;
-    const t0 = performance.now(), dur = 650;
-    const step = now => {
-      const t = Math.min(1, (now - t0) / dur);
-      const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-      view = { x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e, w: from.w + (to.w - from.w) * e, h: from.h + (to.h - from.h) * e };
-      clampView(); applyView();
-      if (t < 1) viewAnim = requestAnimationFrame(step); else viewAnim = null;
-    };
-    viewAnim = requestAnimationFrame(step);
-    // rAF stalls in background/occluded tabs; guarantee the end state.
-    setTimeout(() => {
-      if (token === animToken && viewAnim) { cancelAnimationFrame(viewAnim); viewAnim = null; view = { ...to }; clampView(); applyView(); }
-    }, dur + 150);
+    view = { w, h, x: cx - w / 2, y: cy - h / 2 };
+    clampView(); applyView();
   }
   function applyView() {
     const vb = `${view.x} ${view.y} ${view.w} ${view.h}`;
