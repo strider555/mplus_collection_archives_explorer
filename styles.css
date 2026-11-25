@@ -978,7 +978,9 @@ html, body {
     align-items: center;
     gap: 3px;
     border-radius: 0;
-    white-space: nowrap;
+    white-space: normal;
+    justify-content: flex-start;
+    min-height: 60px;
     font-size: 10px;
     border-top: 2px solid transparent;
     transition: border-color 0.2s, opacity 0.2s;
@@ -987,7 +989,9 @@ html, body {
 
   .legend-item span {
     font-size: 9px;
-    line-height: 1;
+    line-height: 1.2;
+    text-align: center;
+    white-space: normal;
   }
 
   .legend-item .legend-expand {
@@ -1044,7 +1048,7 @@ html, body {
 
   /* Zoom controls above legend bar */
   .zoom-controls {
-    bottom: 60px;
+    bottom: 74px;
     right: 12px;
   }
 }
