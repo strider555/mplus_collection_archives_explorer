@@ -3,25 +3,25 @@
   {
    "name_en": "Hong Kong",
    "name_tc": "香港",
-   "count": 3122,
+   "count": 3112,
    "iso": "HK"
   },
   {
    "name_en": "Thailand",
    "name_tc": "泰國",
-   "count": 645,
+   "count": 646,
    "iso": "TH"
   },
   {
    "name_en": "China",
    "name_tc": "中國",
-   "count": 641,
+   "count": 627,
    "iso": "CN"
   },
   {
    "name_en": "Indonesia",
    "name_tc": "印尼",
-   "count": 307,
+   "count": 310,
    "iso": "ID"
   },
   {
@@ -33,13 +33,13 @@
   {
    "name_en": "United States",
    "name_tc": "美國",
-   "count": 263,
+   "count": 265,
    "iso": "US"
   },
   {
    "name_en": "Singapore",
    "name_tc": "新加坡",
-   "count": 220,
+   "count": 219,
    "iso": "SG"
   },
   {
@@ -51,14 +51,8 @@
   {
    "name_en": "India",
    "name_tc": "印度",
-   "count": 45,
+   "count": 46,
    "iso": "IN"
-  },
-  {
-   "name_en": "Malaysia",
-   "name_tc": "馬來西亞",
-   "count": 42,
-   "iso": "MY"
   },
   {
    "name_en": "Cambodia",
@@ -67,28 +61,28 @@
    "iso": "KH"
   },
   {
-   "name_en": "United Kingdom",
-   "name_tc": "英國",
-   "count": 26,
-   "iso": "GB"
-  },
-  {
-   "name_en": "Israel",
-   "name_tc": "以色列",
-   "count": 24,
-   "iso": "IL"
+   "name_en": "Malaysia",
+   "name_tc": "馬來西亞",
+   "count": 34,
+   "iso": "MY"
   },
   {
    "name_en": "France",
    "name_tc": "法國",
-   "count": 23,
+   "count": 20,
    "iso": "FR"
   },
   {
    "name_en": "Vietnam",
    "name_tc": "越南",
-   "count": 20,
+   "count": 19,
    "iso": "VN"
+  },
+  {
+   "name_en": "Italy",
+   "name_tc": "意大利",
+   "count": 12,
+   "iso": "IT"
   },
   {
    "name_en": "Egypt",
@@ -97,16 +91,16 @@
    "iso": "EG"
   },
   {
-   "name_en": "Italy",
-   "name_tc": "意大利",
-   "count": 7,
-   "iso": "IT"
-  },
-  {
    "name_en": "South Africa",
    "name_tc": "南非",
    "count": 6,
    "iso": "ZA"
+  },
+  {
+   "name_en": "Israel",
+   "name_tc": "以色列",
+   "count": 5,
+   "iso": "IL"
   },
   {
    "name_en": "Sri Lanka",
@@ -127,22 +121,16 @@
    "iso": "DE"
   },
   {
-   "name_en": "Lebanon",
-   "name_tc": "黎巴嫩",
-   "count": 1,
-   "iso": "LB"
-  },
-  {
-   "name_en": "Colombia",
-   "name_tc": "哥倫比亞",
-   "count": 1,
-   "iso": "CO"
-  },
-  {
    "name_en": "Philippines",
    "name_tc": "菲律賓",
    "count": 1,
    "iso": "PH"
+  },
+  {
+   "name_en": "United Kingdom",
+   "name_tc": "英國",
+   "count": 1,
+   "iso": "GB"
   },
   {
    "name_en": "Mongolia",
@@ -151,10 +139,10 @@
    "iso": "MN"
   },
   {
-   "name_en": "Brazil",
-   "name_tc": "巴西",
+   "name_en": "Canada",
+   "name_tc": "加拿大",
    "count": 1,
-   "iso": "BR"
+   "iso": "CA"
   }
  ],
  "pins": [
@@ -162,7 +150,7 @@
    "name_en": "Bangkok",
    "name_tc": "曼谷",
    "level": "city",
-   "count": 639,
+   "count": 624,
    "country": "Thailand",
    "x": 747.6,
    "y": 210.3,
@@ -192,7 +180,7 @@
    "name_en": "Shenzhen",
    "name_tc": "深圳",
    "level": "city",
-   "count": 140,
+   "count": 139,
    "country": "China",
    "x": 784.1,
    "y": 184.6,
@@ -202,7 +190,7 @@
    "name_en": "New York",
    "name_tc": "紐約",
    "level": "city",
-   "count": 120,
+   "count": 119,
    "country": "United States",
    "x": 268.1,
    "y": 125.7,
@@ -212,7 +200,7 @@
    "name_en": "Taipei",
    "name_tc": "台北",
    "level": "city",
-   "count": 113,
+   "count": 112,
    "country": "Taiwan",
    "x": 801.8,
    "y": 176.4,
@@ -222,7 +210,7 @@
    "name_en": "Zhongli",
    "name_tc": "中壢",
    "level": "city",
-   "count": 63,
+   "count": 62,
    "country": "Taiwan",
    "x": 801.8,
    "y": 177.9,
@@ -242,7 +230,7 @@
    "name_en": "Guangdong Province",
    "name_tc": "廣東省",
    "level": "province",
-   "count": 51,
+   "count": 41,
    "country": "China",
    "x": 784.1,
    "y": 180.1,
@@ -259,20 +247,10 @@
    "adjusted_px": 0
   },
   {
-   "name_en": "Shantou",
-   "name_tc": "汕頭",
-   "level": "city",
-   "count": 44,
-   "country": "China",
-   "x": 790.3,
-   "y": 179.4,
-   "adjusted_px": 2
-  },
-  {
    "name_en": "Bali",
    "name_tc": "峇里",
    "level": "province",
-   "count": 42,
+   "count": 41,
    "country": "Indonesia",
    "x": 787.7,
    "y": 279.6,
@@ -322,7 +300,7 @@
    "name_en": "Yokohama",
    "name_tc": "橫濱",
    "level": "city",
-   "count": 28,
+   "count": 25,
    "country": "Japan",
    "x": 837.2,
    "y": 142.2,
@@ -332,7 +310,7 @@
    "name_en": "Donggala",
    "name_tc": "棟加拉",
    "level": "city",
-   "count": 28,
+   "count": 27,
    "country": "Indonesia",
    "x": 798.5,
    "y": 255.6,
@@ -342,7 +320,7 @@
    "name_en": "Philadelphia",
    "name_tc": "費城",
    "level": "city",
-   "count": 26,
+   "count": 23,
    "country": "United States",
    "x": 264.9,
    "y": 128.1,
@@ -352,7 +330,7 @@
    "name_en": "Paris",
    "name_tc": "巴黎",
    "level": "city",
-   "count": 22,
+   "count": 19,
    "country": "France",
    "x": 477.9,
    "y": 100.1,
@@ -382,7 +360,7 @@
    "name_en": "Yogyakarta",
    "name_tc": "日惹",
    "level": "city",
-   "count": 16,
+   "count": 13,
    "country": "Indonesia",
    "x": 776.8,
    "y": 277.9,
@@ -392,7 +370,7 @@
    "name_en": "Palu",
    "name_tc": "帕盧",
    "level": "city",
-   "count": 16,
+   "count": 15,
    "country": "Indonesia",
    "x": 804.9,
    "y": 256.2,
@@ -409,9 +387,9 @@
    "adjusted_px": 2
   },
   {
-   "name_en": "Binh Duong Province",
+   "name_en": "Binh Duong",
    "name_tc": "平陽省",
-   "level": "province",
+   "level": "city",
    "count": 15,
    "country": "Vietnam",
    "x": 766.6,
@@ -432,7 +410,7 @@
    "name_en": "Penang",
    "name_tc": "檳城",
    "level": "city",
-   "count": 14,
+   "count": 10,
    "country": "Malaysia",
    "x": 751.2,
    "y": 236.5,
@@ -442,7 +420,7 @@
    "name_en": "Shanghai",
    "name_tc": "上海",
    "level": "city",
-   "count": 13,
+   "count": 12,
    "country": "China",
    "x": 798.2,
    "y": 162.5,
@@ -482,7 +460,7 @@
    "name_en": "Venice",
    "name_tc": "威尼斯",
    "level": "city",
-   "count": 12,
+   "count": 11,
    "country": "Italy",
    "x": 505.3,
    "y": 110.9,
@@ -552,7 +530,7 @@
    "name_en": "Guangzhou",
    "name_tc": "廣州",
    "level": "city",
-   "count": 8,
+   "count": 7,
    "country": "China",
    "x": 782.7,
    "y": 180.9,
@@ -572,7 +550,7 @@
    "name_en": "Pennsylvania",
    "name_tc": "賓夕法尼亞州",
    "level": "province",
-   "count": 7,
+   "count": 6,
    "country": "United States",
    "x": 259.3,
    "y": 124.2,
@@ -582,7 +560,7 @@
    "name_en": "Illinois",
    "name_tc": "伊利諾州",
    "level": "province",
-   "count": 6,
+   "count": 5,
    "country": "United States",
    "x": 225.8,
    "y": 125.9,
@@ -622,41 +600,11 @@
    "name_en": "California",
    "name_tc": "加州",
    "level": "province",
-   "count": 4,
+   "count": 3,
    "country": "United States",
    "x": 156.9,
    "y": 139.4,
    "adjusted_px": 14
-  },
-  {
-   "name_en": "São Paulo",
-   "name_tc": "聖保羅",
-   "level": "city",
-   "count": 4,
-   "country": "Brazil",
-   "x": 343.3,
-   "y": 327.3,
-   "adjusted_px": 0
-  },
-  {
-   "name_en": "London",
-   "name_tc": "倫敦",
-   "level": "city",
-   "count": 3,
-   "country": "United Kingdom",
-   "x": 471.1,
-   "y": 91.8,
-   "adjusted_px": 0
-  },
-  {
-   "name_en": "Los Angeles",
-   "name_tc": "洛杉磯",
-   "level": "city",
-   "count": 3,
-   "country": "United States",
-   "x": 157.7,
-   "y": 144.7,
-   "adjusted_px": 11
   },
   {
    "name_en": "Michigan",
@@ -672,7 +620,7 @@
    "name_en": "Washington",
    "name_tc": "華盛頓",
    "level": "city",
-   "count": 3,
+   "count": 2,
    "country": "United States",
    "x": 259.7,
    "y": 131.4,
@@ -692,7 +640,7 @@
    "name_en": "Chicago",
    "name_tc": "芝加哥",
    "level": "city",
-   "count": 2,
+   "count": 1,
    "country": "United States",
    "x": 230.6,
    "y": 122.0,
@@ -717,36 +665,6 @@
    "x": 251.2,
    "y": 166.1,
    "adjusted_px": 4
-  },
-  {
-   "name_en": "Geneva",
-   "name_tc": "日內瓦",
-   "level": "city",
-   "count": 1,
-   "country": "Switzerland",
-   "x": 493.9,
-   "y": 109.3,
-   "adjusted_px": 6
-  },
-  {
-   "name_en": "Kaohsiung",
-   "name_tc": "高雄",
-   "level": "city",
-   "count": 1,
-   "country": "Taiwan",
-   "x": 801.1,
-   "y": 181.9,
-   "adjusted_px": 1
-  },
-  {
-   "name_en": "Sydney",
-   "name_tc": "悉尼",
-   "level": "city",
-   "count": 1,
-   "country": "Australia",
-   "x": 878.4,
-   "y": 352.9,
-   "adjusted_px": 11
   },
   {
    "name_en": "Toronto",
@@ -782,6 +700,6 @@
  "hkMarker": {
   "x": 785.2,
   "y": 183.4,
-  "count": 3122
+  "count": 3112
  }
 }
