@@ -29,7 +29,7 @@ function renderStats() {
     `<span><b>${ITEMS.length.toLocaleString()}</b> catalogued records</span>` +
     `<span><b>${archItems.toLocaleString()}</b> architectural-category records</span>` +
     `<span><b>${Math.min(...years)}–${Math.max(...years)}</b> date span</span>` +
-    `<span>Source: M+ Open Data via <a class="ext" href="https://strider555.github.io/mplus_collection_explorer/index.html" target="_blank" rel="noopener">M+ Collection Explorer</a> dataset</span>`;
+    `<span>Data source: <a class="ext" href="https://github.com/mplusmuseum/collection-data" target="_blank" rel="noopener">M+ Collection data — github.com/mplusmuseum/collection-data</a></span>`;
 }
 
 function sortedArchives() {
