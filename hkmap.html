@@ -254,9 +254,20 @@ async function buildStyle() {
     fetch(LABEL_STYLE_URL).then(r => r.json())
   ]);
   if (bs.sprite) bs.sprite = abs(bs.sprite, BASE_STYLE_URL);
-  Object.values(bs.sources || {}).forEach(s => { if (s.url) s.url = abs(s.url, BASE_STYLE_URL); });
+  // Use explicit absolute tile URLs instead of the TileJSON endpoint: the
+  // service's TileJSON lists tiles as relative paths, and resolving those
+  // against the TileJSON URL is unreliable — tiles then silently never draw.
+  const toTiles = (s, styleUrl) => {
+    if (s && s.url) {
+      const tj = abs(s.url, styleUrl);
+      s.tiles = [tj + 'tile/{z}/{y}/{x}.pbf'];
+      delete s.url;
+      if (s.maxzoom == null) s.maxzoom = 18;
+    }
+  };
+  Object.values(bs.sources || {}).forEach(s => toTiles(s, BASE_STYLE_URL));
   const labelSource = ls.sources.esri;
-  if (labelSource && labelSource.url) labelSource.url = abs(labelSource.url, LABEL_STYLE_URL);
+  toTiles(labelSource, LABEL_STYLE_URL);
   bs.sources['esri-label'] = labelSource;
   // The label dataset's font service also serves every font the basemap uses.
   bs.glyphs = abs(ls.glyphs, LABEL_STYLE_URL);
