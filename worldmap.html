@@ -251,7 +251,10 @@ async function init() {
     });
     g.addEventListener('mousemove', e => showTooltip(tooltip.innerHTML, e.clientX, e.clientY));
     g.addEventListener('mouseleave', () => { g.style.filter = ''; hideTooltip(); });
-    g.addEventListener('click', () => openPanel(c.name_en, c.name_tc, 'Country', c.count));
+    // stopPropagation: in this SVG some country groups nest inside others
+    // (Taiwan's group sits inside China's), and a click would otherwise
+    // bubble up and let the outer country's handler overwrite the panel.
+    g.addEventListener('click', e => { e.stopPropagation(); openPanel(c.name_en, c.name_tc, 'Country', c.count); });
   });
 
   // Pin overlay (same viewBox as the base map)
