@@ -430,8 +430,8 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel()
 async function init() {
   const [svgText, world, objects, links, images] = await Promise.all([
     fetch('./assets/world-states.svg').then(r => r.text()),
-    fetch('./data/map-world.json').then(r => r.json()),
-    fetch('./data/map-world-objects.json').then(r => r.json()),
+    fetch('./data/map-world.json?v=2').then(r => r.json()),
+    fetch('./data/map-world-objects.json?v=2').then(r => r.json()),
     fetch('./data/mplus-links.json?v=2').then(r => r.json()).catch(() => ({})),
     fetch('./data/mplus-images.json?v=1').then(r => r.json()).catch(() => ({}))
   ]);
