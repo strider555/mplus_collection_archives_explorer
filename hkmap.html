@@ -232,7 +232,7 @@ function showObjects(key, nameEn, nameTc, levelLabel, count, extraKeys) {
     t.textContent = o.title;
     const f = document.createElement('div');
     f.className = 'obj-fonds';
-    f.textContent = o.fonds;
+    f.textContent = o.number ? o.number + ' · ' + o.fonds : o.fonds;
     row.appendChild(t); row.appendChild(f);
     frag.appendChild(row);
   });

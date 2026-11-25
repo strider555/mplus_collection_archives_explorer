@@ -3,20 +3,32 @@
   {
    "name_en": "Hong Kong",
    "name_tc": "香港",
-   "count": 3112,
+   "count": 3119,
    "iso": "HK"
   },
   {
    "name_en": "Thailand",
    "name_tc": "泰國",
-   "count": 646,
+   "count": 683,
    "iso": "TH"
   },
   {
    "name_en": "China",
    "name_tc": "中國",
-   "count": 627,
+   "count": 624,
    "iso": "CN"
+  },
+  {
+   "name_en": "United States",
+   "name_tc": "美國",
+   "count": 346,
+   "iso": "US"
+  },
+  {
+   "name_en": "Taiwan",
+   "name_tc": "台灣",
+   "count": 317,
+   "iso": "TW"
   },
   {
    "name_en": "Indonesia",
@@ -25,33 +37,27 @@
    "iso": "ID"
   },
   {
-   "name_en": "Taiwan",
-   "name_tc": "台灣",
-   "count": 272,
-   "iso": "TW"
-  },
-  {
-   "name_en": "United States",
-   "name_tc": "美國",
-   "count": 265,
-   "iso": "US"
-  },
-  {
    "name_en": "Singapore",
    "name_tc": "新加坡",
-   "count": 219,
+   "count": 229,
    "iso": "SG"
   },
   {
    "name_en": "Japan",
    "name_tc": "日本",
-   "count": 113,
+   "count": 114,
    "iso": "JP"
+  },
+  {
+   "name_en": "United Kingdom",
+   "name_tc": "英國",
+   "count": 50,
+   "iso": "GB"
   },
   {
    "name_en": "India",
    "name_tc": "印度",
-   "count": 46,
+   "count": 45,
    "iso": "IN"
   },
   {
@@ -63,14 +69,8 @@
   {
    "name_en": "Malaysia",
    "name_tc": "馬來西亞",
-   "count": 34,
+   "count": 33,
    "iso": "MY"
-  },
-  {
-   "name_en": "France",
-   "name_tc": "法國",
-   "count": 20,
-   "iso": "FR"
   },
   {
    "name_en": "Vietnam",
@@ -79,22 +79,28 @@
    "iso": "VN"
   },
   {
-   "name_en": "Italy",
-   "name_tc": "意大利",
-   "count": 12,
-   "iso": "IT"
+   "name_en": "France",
+   "name_tc": "法國",
+   "count": 19,
+   "iso": "FR"
   },
   {
-   "name_en": "Egypt",
-   "name_tc": "埃及",
-   "count": 7,
-   "iso": "EG"
+   "name_en": "Italy",
+   "name_tc": "意大利",
+   "count": 13,
+   "iso": "IT"
   },
   {
    "name_en": "South Africa",
    "name_tc": "南非",
    "count": 6,
    "iso": "ZA"
+  },
+  {
+   "name_en": "Egypt",
+   "name_tc": "埃及",
+   "count": 5,
+   "iso": "EG"
   },
   {
    "name_en": "Israel",
@@ -111,7 +117,7 @@
   {
    "name_en": "Switzerland",
    "name_tc": "瑞士",
-   "count": 4,
+   "count": 3,
    "iso": "CH"
   },
   {
@@ -125,12 +131,6 @@
    "name_tc": "菲律賓",
    "count": 1,
    "iso": "PH"
-  },
-  {
-   "name_en": "United Kingdom",
-   "name_tc": "英國",
-   "count": 1,
-   "iso": "GB"
   },
   {
    "name_en": "Mongolia",
@@ -700,6 +700,6 @@
  "hkMarker": {
   "x": 785.2,
   "y": 183.4,
-  "count": 3112
+  "count": 3119
  }
 }
