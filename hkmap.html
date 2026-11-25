@@ -326,9 +326,13 @@ function recolourDark(layers) {
     const p = l.paint || {};
     Object.keys(p).forEach(k => {
       if (k === 'fill-color' || k === 'background-color') {
-        p[k] = remap(p[k], t => (t.h >= 185 && t.h <= 255 && t.s >= 0.2)
-          ? { h: t.h, s: Math.min(t.s, 0.55), l: 0.055 + (1 - t.l) * 0.05 }
-          : { h: t.h, s: t.s * 0.65, l: 0.055 + (1 - t.l) * 0.20 });
+        p[k] = remap(p[k], t => {
+          if (t.h >= 185 && t.h <= 255 && t.s >= 0.2)
+            return { h: t.h, s: Math.min(t.s, 0.55), l: 0.055 + (1 - t.l) * 0.05 };
+          let l = 0.055 + (1 - t.l) * 0.20;
+          if (t.h >= 15 && t.h <= 55 && t.s > 0.6) l = Math.min(l, 0.13);  // motorway gold fills
+          return { h: t.h, s: t.s * (t.s > 0.6 ? 0.45 : 0.65), l };
+        });
       } else if (k === 'line-color' || k === 'fill-outline-color' || k === 'icon-color' || k === 'circle-color') {
         p[k] = remap(p[k], t => {
           let l = 0.30 + (1 - t.l) * 0.35;
@@ -450,16 +454,23 @@ async function init() {
       id: 'district-fill', type: 'fill', source: 'districts',
       paint: {
         'fill-color': ['get', 'fill'],
-        'fill-opacity': ['interpolate', ['linear'], ['zoom'],
-          10, ['case', ['>', ['get', 'count'], 0], 0.48, 0.20],
-          13, ['case', ['>', ['get', 'count'], 0], 0.24, 0.10],
-          15.5, ['case', ['>', ['get', 'count'], 0], 0.10, 0.05]]
+        'fill-opacity': ['case', ['>', ['get', 'count'], 0], 0.48, 0.20]
       }
     });
     map.addLayer({
       id: 'district-line', type: 'line', source: 'districts',
       paint: { 'line-color': 'rgba(230,168,23,0.55)', 'line-width': 1 }
     });
+    // Fade the gold district wash as the user zooms in, so street-level
+    // labels stay readable; full strength at the territory-wide view.
+    const fadeFill = () => {
+      const z = map.getZoom();
+      const hi = z <= 11 ? 0.48 : z <= 13 ? 0.30 : z <= 15 ? 0.15 : 0.08;
+      const lo = z <= 11 ? 0.20 : z <= 13 ? 0.12 : z <= 15 ? 0.06 : 0.04;
+      map.setPaintProperty('district-fill', 'fill-opacity',
+        ['case', ['>', ['get', 'count'], 0], hi, lo]);
+    };
+    map.on('zoom', fadeFill);
     map.addSource('district-labels', { type: 'geojson', data: labelFC });
     map.addLayer({
       id: 'district-label', type: 'symbol', source: 'district-labels',
