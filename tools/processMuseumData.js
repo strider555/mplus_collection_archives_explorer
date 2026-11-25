@@ -88,7 +88,7 @@ constituentsData.forEach(c => {
     id: c.id,
     name: c.name || '',
     nameTC: c.nameTC || '',
-    nationality: c.nationality || '',
+    country: c.country || '',
     bio: c.displayBio || '',
     type: c.type || ''
   });
@@ -130,7 +130,7 @@ console.log(`Found ${siggArtistIds.size} Sigg Prize artists in collection (will 
 
 // Process objects and collect tag statistics
 const tagCounts = new Map();
-const tagTypes = new Map(); // tag -> type (area/category/medium/nationality/decade)
+const tagTypes = new Map(); // tag -> type (area/category/medium/country/decade)
 const linkPairs = new Map(); // "tag1|tag2" -> weight
 const objectsByTag = new Map(); // tag -> [object objects (compact)]
 const artistCounts = new Map();
@@ -170,7 +170,7 @@ objectsData.forEach((obj, idx) => {
   let artistId = '';
   let artistName = '';
   let artistNameTC = '';
-  let nationality = '';
+  let country = '';
 
   if (constituentIds.length > 0) {
     const mainArtistId = String(constituentIds[0]);
@@ -179,7 +179,7 @@ objectsData.forEach((obj, idx) => {
       artistId = mainArtistId;
       artistName = artist.name;
       artistNameTC = artist.nameTC;
-      nationality = artist.nationality;
+      country = artist.country;
 
       artistCounts.set(artistId, (artistCounts.get(artistId) || 0) + 1);
     }
@@ -202,7 +202,7 @@ objectsData.forEach((obj, idx) => {
     date: displayDate,
     artistName,
     artistNameTC,
-    nationality
+    country
   };
 
   // Collect all tags for this object
@@ -276,22 +276,22 @@ objectsData.forEach((obj, idx) => {
     }
   }
 
-  // Add nationality tag
-  if (nationality && nationality.length < 50) {
-    objTags.push(nationality);
-    tagCounts.set(nationality, (tagCounts.get(nationality) || 0) + 1);
-    tagTypes.set(nationality, 'nationality');
-    if (!objectsByTag.has(nationality)) objectsByTag.set(nationality, []);
-    if (objectsByTag.get(nationality).length < 50) {
-      objectsByTag.get(nationality).push(objCompact);
+  // Add country tag
+  if (country && country.length < 50) {
+    objTags.push(country);
+    tagCounts.set(country, (tagCounts.get(country) || 0) + 1);
+    tagTypes.set(country, 'country');
+    if (!objectsByTag.has(country)) objectsByTag.set(country, []);
+    if (objectsByTag.get(country).length < 50) {
+      objectsByTag.get(country).push(objCompact);
     }
 
     // Track Sigg data
     if (isSiggObject) {
-      siggTagCounts.set(nationality, (siggTagCounts.get(nationality) || 0) + 1);
-      if (!siggObjectsByTag.has(nationality)) siggObjectsByTag.set(nationality, []);
-      if (siggObjectsByTag.get(nationality).length < 50) {
-        siggObjectsByTag.get(nationality).push(objCompact);
+      siggTagCounts.set(country, (siggTagCounts.get(country) || 0) + 1);
+      if (!siggObjectsByTag.has(country)) siggObjectsByTag.set(country, []);
+      if (siggObjectsByTag.get(country).length < 50) {
+        siggObjectsByTag.get(country).push(objCompact);
       }
     }
   }
@@ -357,7 +357,7 @@ for (const [tag, count] of tagCounts.entries()) {
   }
 }
 
-// Select top categories, mediums, nationalities
+// Select top categories, mediums, countries
 const categories = [...tagCounts.entries()]
   .filter(([tag]) => tagTypes.get(tag) === 'category')
   .sort((a, b) => b[1] - a[1])
@@ -370,8 +370,8 @@ const mediums = [...tagCounts.entries()]
   .slice(0, 20)
   .filter(([, count]) => count >= minTagCount);
 
-const nationalities = [...tagCounts.entries()]
-  .filter(([tag]) => tagTypes.get(tag) === 'nationality')
+const countries = [...tagCounts.entries()]
+  .filter(([tag]) => tagTypes.get(tag) === 'country')
   .sort((a, b) => b[1] - a[1])
   .slice(0, 15)
   .filter(([, count]) => count >= minTagCount);
@@ -383,10 +383,10 @@ const decades = [...tagCounts.entries()]
 
 categories.forEach(([tag, count]) => filteredTags.set(tag, { count, type: 'category' }));
 mediums.forEach(([tag, count]) => filteredTags.set(tag, { count, type: 'medium' }));
-nationalities.forEach(([tag, count]) => filteredTags.set(tag, { count, type: 'nationality' }));
+countries.forEach(([tag, count]) => filteredTags.set(tag, { count, type: 'country' }));
 decades.forEach(([tag, count]) => filteredTags.set(tag, { count, type: 'decade' }));
 
-console.log(`Filtered tags: ${filteredTags.size} (areas: ${[...filteredTags.values()].filter(t => t.type === 'area').length}, categories: ${categories.length}, mediums: ${mediums.length}, nationalities: ${nationalities.length}, decades: ${decades.length})`);
+console.log(`Filtered tags: ${filteredTags.size} (areas: ${[...filteredTags.values()].filter(t => t.type === 'area').length}, categories: ${categories.length}, mediums: ${mediums.length}, countries: ${countries.length}, decades: ${decades.length})`);
 
 // Build tag nodes array
 const tagNodes = [];
@@ -410,7 +410,7 @@ for (const [tag, count] of siggTagCounts.entries()) {
   }
 }
 
-// Select top Sigg categories, mediums, nationalities, decades
+// Select top Sigg categories, mediums, countries, decades
 const siggCategories = [...siggTagCounts.entries()]
   .filter(([tag]) => tagTypes.get(tag) === 'category')
   .sort((a, b) => b[1] - a[1])
@@ -423,8 +423,8 @@ const siggMediums = [...siggTagCounts.entries()]
   .slice(0, 20)
   .filter(([, count]) => count >= minSiggTagCount);
 
-const siggNationalities = [...siggTagCounts.entries()]
-  .filter(([tag]) => tagTypes.get(tag) === 'nationality')
+const siggCountries = [...siggTagCounts.entries()]
+  .filter(([tag]) => tagTypes.get(tag) === 'country')
   .sort((a, b) => b[1] - a[1])
   .slice(0, 15)
   .filter(([, count]) => count >= minSiggTagCount);
@@ -436,10 +436,10 @@ const siggDecades = [...siggTagCounts.entries()]
 
 siggCategories.forEach(([tag, count]) => filteredSiggTags.set(tag, { count, type: 'category' }));
 siggMediums.forEach(([tag, count]) => filteredSiggTags.set(tag, { count, type: 'medium' }));
-siggNationalities.forEach(([tag, count]) => filteredSiggTags.set(tag, { count, type: 'nationality' }));
+siggCountries.forEach(([tag, count]) => filteredSiggTags.set(tag, { count, type: 'country' }));
 siggDecades.forEach(([tag, count]) => filteredSiggTags.set(tag, { count, type: 'decade' }));
 
-console.log(`Filtered Sigg tags: ${filteredSiggTags.size} (areas: ${[...filteredSiggTags.values()].filter(t => t.type === 'area').length}, categories: ${siggCategories.length}, mediums: ${siggMediums.length}, nationalities: ${siggNationalities.length}, decades: ${siggDecades.length})`);
+console.log(`Filtered Sigg tags: ${filteredSiggTags.size} (areas: ${[...filteredSiggTags.values()].filter(t => t.type === 'area').length}, categories: ${siggCategories.length}, mediums: ${siggMediums.length}, countries: ${siggCountries.length}, decades: ${siggDecades.length})`);
 
 // Build Sigg tag nodes array
 const siggTagNodes = [];
@@ -535,7 +535,7 @@ constituentMap.forEach((artist, id) => {
       id: artist.id,
       name: artist.name,
       nameTC: artist.nameTC,
-      nationality: artist.nationality,
+      country: artist.country,
       bio: artist.bio.substring(0, 200), // Limit bio length
       objectCount: count
     });
@@ -614,7 +614,7 @@ topArtists.forEach(artist => {
     id: artist.id,
     name: artist.name,
     nameTC: artist.nameTC || '',
-    nationality: artist.nationality || '',
+    country: artist.country || '',
     objectCount: artist.objectCount
   });
 });
@@ -649,7 +649,7 @@ allSiggArtists.forEach(artist => {
     id: artist.id,
     name: artist.name,
     nameTC: artist.nameTC || '',
-    nationality: artist.nationality || '',
+    country: artist.country || '',
     bio: artist.bio || '',
     objectCount: artist.objectCount
   });
