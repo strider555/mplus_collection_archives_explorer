@@ -243,7 +243,7 @@ async function loadCreditsAndPatches() {
   } catch (e) { console.warn('archives not available'); }
 
   try {
-    const resp = await fetch('./data/mplus-links.json?v=1');
+    const resp = await fetch('./data/mplus-links.json?v=2');
     if (resp.ok) mplusLinks = await resp.json();
   } catch (e) { console.warn('mplus links not available'); }
 }
@@ -833,16 +833,132 @@ function showArchivePanel(archiveName) {
       });
     }
 
-    appendCards(objects.slice(0, BATCH));
-    if (objects.length > BATCH) {
-      const moreBtn = document.createElement('button');
-      moreBtn.id = 'archiveMoreBtn';
-      moreBtn.textContent = `Show all ${objects.length.toLocaleString()} objects`;
-      moreBtn.addEventListener('click', () => {
-        appendCards(objects.slice(BATCH));
-        moreBtn.remove();
+    // Archival tree: nest the records by reference code, Fonds at the root
+    // down through Sub-fonds / Series / Subseries to File / Item leaves,
+    // using the level + number data in mplus-links. Fall back to the flat
+    // card list if any record lacks a number.
+    const linkOf = (o) => mplusLinks[o.id] || mplusLinks[String(o.id)];
+    const canTree = objects.length > 0 && objects.every(o => { const lk = linkOf(o); return lk && lk.n; });
+    if (!canTree) {
+      appendCards(objects.slice(0, BATCH));
+      if (objects.length > BATCH) {
+        const moreBtn = document.createElement('button');
+        moreBtn.id = 'archiveMoreBtn';
+        moreBtn.textContent = `Show all ${objects.length.toLocaleString()} objects`;
+        moreBtn.addEventListener('click', () => {
+          if (window._setPanelNavigating) window._setPanelNavigating();
+          appendCards(objects.slice(BATCH));
+          moreBtn.remove();
+        });
+        panel.appendChild(moreBtn);
+      }
+    } else {
+      const byCode = new Map();
+      objects.forEach(o => {
+        const lk = linkOf(o);
+        byCode.set(lk.n, { obj: o, code: lk.n, level: lk.l || '', children: [] });
       });
-      panel.appendChild(moreBtn);
+      const segKey = (code) => code.split('/').map(s => {
+        const m = s.match(/^([A-Za-z]*)(\d+(?:\.\d+)?)?(.*)$/);
+        return [m[1] || '', m[2] ? parseFloat(m[2]) : 0, m[3] || ''];
+      });
+      const cmpCode = (a, b) => {
+        const ka = segKey(a), kb = segKey(b);
+        for (let i = 0; i < Math.max(ka.length, kb.length); i++) {
+          if (ka[i] === undefined) return -1;
+          if (kb[i] === undefined) return 1;
+          for (let j = 0; j < 3; j++) {
+            if (ka[i][j] < kb[i][j]) return -1;
+            if (ka[i][j] > kb[i][j]) return 1;
+          }
+        }
+        return 0;
+      };
+      const roots = [];
+      byCode.forEach(node => {
+        let p = node.code.includes('/') ? node.code.slice(0, node.code.lastIndexOf('/')) : null;
+        while (p && !byCode.has(p)) p = p.includes('/') ? p.slice(0, p.lastIndexOf('/')) : null;
+        if (p) byCode.get(p).children.push(node); else roots.push(node);
+      });
+      const sortRec = (list) => { list.sort((a, b) => cmpCode(a.code, b.code)); list.forEach(n => sortRec(n.children)); };
+      sortRec(roots);
+
+      const expanded = new Set();
+      roots.forEach(r => { expanded.add(r.code); r.children.forEach(c => expanded.add(c.code)); });
+
+      const controls = document.createElement('div');
+      controls.className = 'tree-controls';
+      const exBtn = document.createElement('button');
+      exBtn.textContent = 'Expand all';
+      exBtn.addEventListener('click', () => {
+        if (window._setPanelNavigating) window._setPanelNavigating();
+        byCode.forEach(n => expanded.add(n.code));
+        refresh();
+      });
+      const coBtn = document.createElement('button');
+      coBtn.textContent = 'Collapse all';
+      coBtn.addEventListener('click', () => {
+        if (window._setPanelNavigating) window._setPanelNavigating();
+        expanded.clear();
+        roots.forEach(r => expanded.add(r.code));
+        refresh();
+      });
+      controls.appendChild(exBtn); controls.appendChild(coBtn);
+      grid.appendChild(controls);
+
+      const tree = document.createElement('div');
+      tree.className = 'archive-tree';
+      grid.appendChild(tree);
+
+      function renderNode(node, parentEl) {
+        const row = document.createElement('div');
+        row.className = 'tree-row';
+        const toggle = document.createElement('button');
+        toggle.className = 'tree-toggle';
+        if (node.children.length) {
+          toggle.textContent = expanded.has(node.code) ? '▾' : '▸';
+          toggle.addEventListener('click', () => {
+            if (window._setPanelNavigating) window._setPanelNavigating();
+            if (expanded.has(node.code)) expanded.delete(node.code); else expanded.add(node.code);
+            refresh();
+          });
+        } else {
+          toggle.classList.add('leaf');
+          toggle.textContent = '·';
+        }
+        const body = document.createElement('div');
+        body.className = 'tree-body';
+        const badge = document.createElement('span');
+        badge.className = 'tree-level lv-' + node.level.toLowerCase().replace(/[^a-z]+/g, '-');
+        badge.textContent = node.level;
+        const title = document.createElement('span');
+        title.className = 'tree-title';
+        title.textContent = node.obj.title || 'Untitled';
+        const num = document.createElement('span');
+        num.className = 'tree-num';
+        num.textContent = node.code;
+        body.appendChild(badge); body.appendChild(title); body.appendChild(num);
+        if (node.obj.titleTC) {
+          const tc = document.createElement('div');
+          tc.className = 'tree-title-tc';
+          tc.textContent = node.obj.titleTC;
+          body.appendChild(tc);
+        }
+        body.addEventListener('click', () => showArtworkPanel(node.obj.id));
+        row.appendChild(toggle); row.appendChild(body);
+        parentEl.appendChild(row);
+        if (node.children.length && expanded.has(node.code)) {
+          const kids = document.createElement('div');
+          kids.className = 'tree-children';
+          parentEl.appendChild(kids);
+          node.children.forEach(c => renderNode(c, kids));
+        }
+      }
+      function refresh() {
+        tree.innerHTML = '';
+        roots.forEach(r => renderNode(r, tree));
+      }
+      refresh();
     }
   } catch (e) {
     console.error('[archives] panel render failed', e);
@@ -856,6 +972,7 @@ function showArchivePanel(archiveName) {
 
 // Show artwork panel
 function showArtworkPanel(artworkId) {
+  if (window._setPanelNavigating) window._setPanelNavigating();
   const panel = document.getElementById('sidePanel');
   const currentData = getCurrentData();
 
@@ -1997,11 +2114,18 @@ async function init() {
       }
     });
 
-    // Close panel when clicking outside
+    // Close panel when clicking outside. Judge by where the press STARTED:
+    // in-panel clicks often re-render the panel, detaching the clicked
+    // element, after which it no longer counts as "inside" the panel.
     let panelNavigating = false;
+    let panelPressInside = false;
     window._setPanelNavigating = () => { panelNavigating = true; setTimeout(() => { panelNavigating = false; }, 100); };
+    document.addEventListener('mousedown', (e) => {
+      const p = document.getElementById('sidePanel');
+      panelPressInside = !!(p && p.contains(e.target));
+    }, true);
     document.addEventListener('click', (e) => {
-      if (panelNavigating) return;
+      if (panelNavigating || panelPressInside) return;
       const panel = document.getElementById('sidePanel');
       if (panel.classList.contains('open') &&
           !panel.contains(e.target) &&

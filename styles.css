@@ -1316,3 +1316,24 @@ html, body {
 #archiveMoreBtn:hover {
   background: #e5e7eb;
 }
+
+/* Archive panel: archival-level tree */
+.tree-controls { display: flex; gap: 8px; margin: 0 0 8px; }
+.tree-controls button { background: rgba(230,168,23,.12); color: var(--gold); border: 1px solid rgba(230,168,23,.45); border-radius: 6px; padding: 3px 10px; font-size: 12px; cursor: pointer; }
+.archive-tree { padding: 2px; }
+.tree-children { margin-left: 14px; border-left: 1px solid rgba(148,163,184,.25); padding-left: 5px; }
+.tree-row { display: flex; align-items: flex-start; gap: 3px; padding: 2px 0; }
+.tree-toggle { flex: 0 0 18px; background: none; border: none; color: var(--gold); cursor: pointer; font-size: 12px; padding: 2px 0; line-height: 1.2; }
+.tree-toggle.leaf { color: #64748b; cursor: default; }
+.tree-body { flex: 1; min-width: 0; cursor: pointer; border-radius: 6px; padding: 2px 6px; }
+.tree-body:hover { background: rgba(230,168,23,.08); }
+.tree-level { display: inline-block; font-size: 10px; letter-spacing: .03em; padding: 1px 6px; border-radius: 999px; margin-right: 6px; background: #334155; color: #e2e8f0; vertical-align: 1px; white-space: nowrap; }
+.tree-level.lv-fonds { background: #E6A817; color: #1a1405; font-weight: 700; }
+.tree-level.lv-sub-fonds { background: #92600a; color: #ffe9b0; }
+.tree-level.lv-series { background: #155e56; color: #b8f1e8; }
+.tree-level.lv-subseries, .tree-level.lv-sub-subseries { background: #1e4a45; color: #a7e8dd; }
+.tree-level.lv-file { background: #3b4a63; color: #dbeafe; }
+.tree-level.lv-item { background: #2b3444; color: #cbd5e1; }
+.tree-title { font-size: 13px; color: #f1f5f9; }
+.tree-num { font-size: 11px; color: #94a3b8; margin-left: 6px; white-space: nowrap; }
+.tree-title-tc { font-size: 12px; color: #94a3b8; margin-top: 1px; }
