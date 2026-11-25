@@ -95,6 +95,8 @@
     .panel-content { flex: 1; overflow-y: auto; padding: 14px 24px 20px; }
     .obj-row { padding: 9px 0; border-bottom: 1px solid rgba(48,54,61,0.6); }
     .obj-title { font-size: 13px; line-height: 1.45; }
+    .obj-title a { color: #e8b64c; text-decoration: none; }
+    .obj-title a:hover { text-decoration: underline; }
     .obj-fonds { font-size: 11px; color: var(--muted); margin-top: 2px; }
     .more-note { padding: 14px 0; font-size: 12px; color: var(--muted); text-align: center; }
 
@@ -161,6 +163,7 @@
 const tooltip = document.getElementById('tooltip');
 const panel = document.getElementById('panel');
 let objectsByLocation = {};
+let mplusLinks = {}; // id -> {u: official M+ page URL, n: objectNumber}
 
 function goldColor(count, max) {
   const t = Math.log(1 + count) / Math.log(1 + max);
@@ -192,7 +195,15 @@ function openPanel(nameEn, nameTc, levelLabel, count) {
     row.className = 'obj-row';
     const t = document.createElement('div');
     t.className = 'obj-title';
-    t.textContent = o.title;
+    const mplus = mplusLinks[o.id];
+    if (mplus) {
+      const a = document.createElement('a');
+      a.href = mplus.u; a.target = '_blank'; a.rel = 'noopener';
+      a.textContent = o.title + ' ↗';
+      t.appendChild(a);
+    } else {
+      t.textContent = o.title;
+    }
     const f = document.createElement('div');
     f.className = 'obj-fonds';
     f.textContent = o.number ? o.number + ' · ' + o.fonds : o.fonds;
@@ -220,12 +231,14 @@ document.getElementById('panelClose').addEventListener('click', closePanel);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
 
 async function init() {
-  const [svgText, world, objects] = await Promise.all([
+  const [svgText, world, objects, links] = await Promise.all([
     fetch('./assets/world-states.svg').then(r => r.text()),
     fetch('./data/map-world.json').then(r => r.json()),
-    fetch('./data/map-world-objects.json').then(r => r.json())
+    fetch('./data/map-world-objects.json').then(r => r.json()),
+    fetch('./data/mplus-links.json?v=1').then(r => r.json()).catch(() => ({}))
   ]);
   objectsByLocation = objects;
+  mplusLinks = links;
 
   const holder = document.getElementById('mapHolder');
   holder.innerHTML = svgText;

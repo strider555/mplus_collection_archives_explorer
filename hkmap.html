@@ -82,6 +82,8 @@
     .obj-head-meta { font-size: 12px; color: var(--gold); margin: 8px 0 6px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
     .obj-row { padding: 9px 0; border-bottom: 1px solid rgba(48,54,61,0.6); }
     .obj-title { font-size: 13px; line-height: 1.45; }
+    .obj-title a { color: #e8b64c; text-decoration: none; }
+    .obj-title a:hover { text-decoration: underline; }
     .obj-fonds { font-size: 11px; color: var(--muted); margin-top: 2px; }
     .more-note { padding: 14px 0; font-size: 12px; color: var(--muted); text-align: center; }
 
@@ -139,6 +141,7 @@ const sidebar = document.getElementById('sidebar');
 let hkData = null;
 let objectsByKey = {};
 let pinList = [];
+let mplusLinks = {}; // id -> {u: official M+ page URL, n: objectNumber}
 
 const BASE_STYLE_URL = 'https://mapapi.hkmapservice.gov.hk/gs/api/v1.0.0/vt/basemap/WGS84/resources/styles/root_dark.json';
 const LABEL_STYLE_URL = 'https://mapapi.hkmapservice.gov.hk/gs/api/v1.0.0/vt/label/hk/tc/WGS84/resources/styles/root_dark.json';
@@ -229,7 +232,15 @@ function showObjects(key, nameEn, nameTc, levelLabel, count, extraKeys) {
     row.className = 'obj-row';
     const t = document.createElement('div');
     t.className = 'obj-title';
-    t.textContent = o.title;
+    const mplus = mplusLinks[o.id];
+    if (mplus) {
+      const a = document.createElement('a');
+      a.href = mplus.u; a.target = '_blank'; a.rel = 'noopener';
+      a.textContent = o.title + ' ↗';
+      t.appendChild(a);
+    } else {
+      t.textContent = o.title;
+    }
     const f = document.createElement('div');
     f.className = 'obj-fonds';
     f.textContent = o.number ? o.number + ' · ' + o.fonds : o.fonds;
@@ -367,15 +378,17 @@ function largestCentre(geom) {
 
 /* ---------- map ---------- */
 async function init() {
-  const [geo, data, objects, pinsData, style] = await Promise.all([
+  const [geo, data, objects, pinsData, style, links] = await Promise.all([
     fetch('./data/hk_districts.json').then(r => r.json()),
     fetch('./data/map-hk.json').then(r => r.json()),
     fetch('./data/map-hk-objects.json').then(r => r.json()),
     fetch('./data/map-hk-pins.json').then(r => r.json()),
-    buildStyle()
+    buildStyle(),
+    fetch('./data/mplus-links.json?v=1').then(r => r.json()).catch(() => ({}))
   ]);
   hkData = data;
   objectsByKey = objects;
+  mplusLinks = links;
   pinList = pinsData.pins || [];
 
   const counts = {};

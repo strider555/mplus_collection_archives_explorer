@@ -16,6 +16,7 @@ let libguidesData = null; // Research Guide entries from libguides.json
 let creditsData = {}; // objectId -> [[name, nameTC, role, roleTC], ...] (sidecar)
 let mlscData = null; // M+ Library Special Collection artists [{name, nameTC, count}]
 let archivesData = null; // M+ Collection Archives [{name, ca, count, url, objects:[ids]}]
+let mplusLinks = {}; // id -> {u: official M+ page URL, n: objectNumber} (matched from the M+ sitemap)
 let objectById = new Map(); // fullObjects lookup by id
 let currentGraph = null;
 let currentFilter = 'all';
@@ -240,6 +241,11 @@ async function loadCreditsAndPatches() {
     const resp = await fetch('./data/archives.json?v=2');
     if (resp.ok) archivesData = await resp.json();
   } catch (e) { console.warn('archives not available'); }
+
+  try {
+    const resp = await fetch('./data/mplus-links.json?v=1');
+    if (resp.ok) mplusLinks = await resp.json();
+  } catch (e) { console.warn('mplus links not available'); }
 }
 
 // Initialize graph
@@ -899,10 +905,16 @@ function showArtworkPanel(artworkId) {
   if (artwork.medium) summaryParts.push(artwork.medium);
   document.getElementById('panelSummary').textContent = summaryParts.join(' · ') || 'No details available';
 
-  // Set details button URL - use M+ collection search since we don't have object slugs
+  // Set details button URL — the record's own M+ page (sitemap-matched);
+  // fall back to an M+ collection search only if an id has no match.
   const detailsBtn = document.getElementById('viewDetailsBtn');
-  const searchTitle = encodeURIComponent(artwork.title || '');
-  detailsBtn.href = `https://www.mplus.org.hk/en/collection/?q=${searchTitle}`;
+  const mplusLink = mplusLinks[artwork.id] || mplusLinks[String(artwork.id)];
+  if (mplusLink) {
+    detailsBtn.href = mplusLink.u;
+  } else {
+    const searchTitle = encodeURIComponent(artwork.title || '');
+    detailsBtn.href = `https://www.mplus.org.hk/en/collection/?q=${searchTitle}`;
+  }
   detailsBtn.classList.remove('disabled');
   detailsBtn.style.display = 'block';
 
@@ -957,6 +969,10 @@ function showArtworkPanel(artworkId) {
       ? `${artwork.medium} (${artwork.mediumTC})`
       : artwork.medium;
     detailsList.push(`<div class="detail-row"><span class="detail-label">Medium:</span><span class="detail-value">${mediumDisplay}</span></div>`);
+  }
+
+  if (mplusLink) {
+    detailsList.push(`<div class="detail-row"><span class="detail-label">M+ Reference:</span><a class="detail-value" href="${mplusLink.u}" target="_blank" rel="noopener">${escapeHtml(mplusLink.n)} ↗</a></div>`);
   }
 
   if (artwork.areas && artwork.areas.length > 0) {
