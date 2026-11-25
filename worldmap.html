@@ -459,7 +459,7 @@ async function init() {
     // stopPropagation: in this SVG some country groups nest inside others
     // (Taiwan's group sits inside China's), and a click would otherwise
     // bubble up and let the outer country's handler overwrite the panel.
-    g.addEventListener('click', e => { e.stopPropagation(); openPanel(c.name_en, c.name_tc, 'Country', c.count); });
+    g.addEventListener('click', e => { e.stopPropagation(); openPanel(c.name_en, c.name_tc, 'Country', c.count); try { const b = g.getBBox(); animateViewTo(b.x + b.width / 2, b.y + b.height / 2, Math.max(130, b.width * 1.35)); } catch (_) {} });
   });
 
   // Remove the base map's locator rings around micro-island nations —
@@ -491,7 +491,7 @@ async function init() {
     });
     circle.addEventListener('mousemove', e => showTooltip(tooltip.innerHTML, e.clientX, e.clientY));
     circle.addEventListener('mouseleave', hideTooltip);
-    circle.addEventListener('click', () => openPanel(p.name_en, p.name_tc, p.level === 'city' ? 'City' : 'Province / State', p.count));
+    circle.addEventListener('click', () => { openPanel(p.name_en, p.name_tc, p.level === 'city' ? 'City' : 'Province / State', p.count); animateViewTo(p.x, p.y, 330); });
     overlay.appendChild(circle);
   });
 
@@ -536,6 +536,23 @@ async function init() {
     view.h = view.w * FULL.h / FULL.w;
     view.x = Math.min(FULL.w - view.w * 0.85, Math.max(-view.w * 0.15, view.x));
     view.y = Math.min(FULL.h - view.h * 0.85, Math.max(-view.h * 0.15, view.y));
+  }
+  let viewAnim = null;
+  function animateViewTo(cx, cy, targetW) {
+    const from = { ...view };
+    const w = Math.min(FULL.w, Math.max(90, targetW));
+    const h = w * FULL.h / FULL.w;
+    const to = { w, h, x: cx - w / 2, y: cy - h / 2 };
+    if (viewAnim) cancelAnimationFrame(viewAnim);
+    const t0 = performance.now(), dur = 650;
+    const step = now => {
+      const t = Math.min(1, (now - t0) / dur);
+      const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      view = { x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e, w: from.w + (to.w - from.w) * e, h: from.h + (to.h - from.h) * e };
+      clampView(); applyView();
+      if (t < 1) viewAnim = requestAnimationFrame(step); else viewAnim = null;
+    };
+    viewAnim = requestAnimationFrame(step);
   }
   function applyView() {
     const vb = `${view.x} ${view.y} ${view.w} ${view.h}`;
