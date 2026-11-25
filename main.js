@@ -249,7 +249,7 @@ async function loadCreditsAndPatches() {
   } catch (e) { console.warn('mplus links not available'); }
 
   try {
-    const resp = await fetch('./data/mplus-images.json?v=1');
+    const resp = await fetch('./data/mplus-images.json?v=2');
     if (resp.ok) mplusImages = await resp.json();
   } catch (e) { console.warn('mplus images not available'); }
 }
