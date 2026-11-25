@@ -308,14 +308,18 @@ async function init() {
   label.setAttribute('text-anchor', 'end');
   label.setAttribute('class', 'hk-label');
   label.textContent = 'Hong Kong';
-  hkGroup.appendChild(diamond); hkGroup.appendChild(label);
+  const hit = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  hit.setAttribute('cx', hk.x); hit.setAttribute('cy', hk.y); hit.setAttribute('r', 15);
+  hit.style.fill = 'transparent';
+  hkGroup.appendChild(hit); hkGroup.appendChild(diamond); hkGroup.appendChild(label);
+  hkGroup.style.cursor = 'pointer';
+  hkGroup.addEventListener('click', () => { window.location.href = './hkmap.html'; });
   hkGroup.addEventListener('mouseenter', e => {
-    diamond.style.fill = '#ffd34d';
     showTooltip(`<div class="tt"></div><div class="tm"></div>`, e.clientX, e.clientY);
     tooltip.querySelector('.tt').textContent = 'Hong Kong 香港';
-    tooltip.querySelector('.tm').textContent = `${fmt(hk.count)} objects — Hong Kong Map link at the top of the page`;
+    tooltip.querySelector('.tm').textContent = `${fmt(hk.count)} objects — click to open the Hong Kong Map`;
   });
-  hkGroup.addEventListener('mouseleave', () => { diamond.style.fill = '#E6A817'; hideTooltip(); });
+  hkGroup.addEventListener('mouseleave', () => { hideTooltip(); });
   overlay.appendChild(hkGroup);
 
   holder.appendChild(overlay);
