@@ -99,6 +99,20 @@
     .obj-title a:hover { text-decoration: underline; }
     .obj-fonds { font-size: 11px; color: var(--muted); margin-top: 2px; }
     .more-note { padding: 14px 0; font-size: 12px; color: var(--muted); text-align: center; }
+    .tree-controls { display: flex; gap: 8px; margin: 2px 0 6px; }
+    .tree-ctl { background: rgba(230,168,23,0.08); border: 1px solid var(--border); color: var(--gold); font-size: 11px; padding: 3px 10px; border-radius: 20px; cursor: pointer; font-family: inherit; }
+    .tree-ctl:hover { background: rgba(230,168,23,0.18); }
+    .tree-row { display: flex; gap: 2px; padding: 6px 0; border-bottom: 1px solid rgba(48,54,61,0.6); align-items: flex-start; }
+    .tree-toggle { background: none; border: none; color: var(--gold); cursor: pointer; font-size: 11px; width: 16px; flex-shrink: 0; padding: 2px 0 0; line-height: 1.4; font-family: inherit; }
+    .tree-toggle.leaf { color: var(--muted); cursor: default; opacity: 0.5; }
+    .tree-main { flex: 1; min-width: 0; }
+    .tree-badge { display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; padding: 1px 6px; border-radius: 8px; margin-right: 6px; vertical-align: 1px; background: rgba(255,255,255,0.08); color: var(--muted); }
+    .tree-badge.lv-fonds { background: var(--gold); color: #0d1117; }
+    .tree-badge.lv-subfonds { background: #b8860b; color: #fff; }
+    .tree-badge.lv-series { background: rgba(78,205,196,0.18); color: #4ecdc4; }
+    .tree-badge.lv-subseries { background: rgba(78,205,196,0.10); color: #7fd8d2; }
+    .tree-badge.lv-subsub { background: rgba(78,205,196,0.07); color: #9adcd8; }
+    .tree-badge.lv-file { background: rgba(255,255,255,0.10); color: #c9d1d9; }
 
     footer { padding: 14px 32px 22px; color: var(--muted); font-size: 12px; text-align: center; }
     .loading { text-align: center; color: var(--muted); padding: 60px 0; font-size: 14px; }
@@ -182,6 +196,85 @@ function showTooltip(html, x, y) {
 }
 function hideTooltip() { tooltip.style.opacity = '0'; }
 
+
+/* ---------- archival tree for object lists (nests by reference code) ---------- */
+const LEVEL_CLASS = { 'Fonds': 'lv-fonds', 'Sub-fonds': 'lv-subfonds', 'Series': 'lv-series', 'Subseries': 'lv-subseries', 'Sub-subseries': 'lv-subsub', 'File': 'lv-file', 'Item': 'lv-item' };
+function segCompare(a, b) {
+  const pa = a.split('/'), pb = b.split('/');
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    if (pa[i] === undefined) return -1;
+    if (pb[i] === undefined) return 1;
+    const na = parseFloat(pa[i]), nb = parseFloat(pb[i]);
+    if (!isNaN(na) && !isNaN(nb) && na !== nb) return na - nb;
+    if (pa[i] !== pb[i]) return pa[i] < pb[i] ? -1 : 1;
+  }
+  return 0;
+}
+function buildObjTree(list) {
+  const byCode = new Map();
+  list.forEach(o => {
+    const lk = mplusLinks[o.id];
+    if (!lk || byCode.has(lk.n)) return;
+    byCode.set(lk.n, { o, code: lk.n, level: lk.l || '', children: [] });
+  });
+  const roots = [];
+  byCode.forEach(node => {
+    let p = node.code, parent = null;
+    while (p.includes('/')) { p = p.slice(0, p.lastIndexOf('/')); if (byCode.has(p)) { parent = byCode.get(p); break; } }
+    if (parent) parent.children.push(node); else roots.push(node);
+  });
+  const srt = arr => { arr.sort((a, b) => segCompare(a.code, b.code)); arr.forEach(n => srt(n.children)); };
+  srt(roots);
+  return roots;
+}
+function renderObjTree(container, list) {
+  const roots = buildObjTree(list);
+  const expanded = new Set();
+  roots.forEach(r => { expanded.add(r.code); r.children.forEach(c => expanded.add(c.code)); });
+  const controls = document.createElement('div');
+  controls.className = 'tree-controls';
+  const bAll = document.createElement('button'); bAll.className = 'tree-ctl'; bAll.textContent = 'Expand all';
+  const bNone = document.createElement('button'); bNone.className = 'tree-ctl'; bNone.textContent = 'Collapse all';
+  controls.appendChild(bAll); controls.appendChild(bNone);
+  container.appendChild(controls);
+  const wrap = document.createElement('div');
+  wrap.className = 'obj-tree-box';
+  container.appendChild(wrap);
+  function draw() {
+    wrap.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    function walk(node, depth) {
+      const row = document.createElement('div');
+      row.className = 'tree-row';
+      row.style.paddingLeft = (depth * 15) + 'px';
+      const tg = document.createElement('button');
+      tg.className = 'tree-toggle';
+      if (node.children.length) {
+        tg.textContent = expanded.has(node.code) ? '\u25be' : '\u25b8';
+        tg.addEventListener('click', () => { if (expanded.has(node.code)) expanded.delete(node.code); else expanded.add(node.code); draw(); });
+      } else { tg.textContent = '\u00b7'; tg.classList.add('leaf'); }
+      row.appendChild(tg);
+      const main = document.createElement('div'); main.className = 'tree-main';
+      const t = document.createElement('div'); t.className = 'obj-title';
+      if (node.level) { const b = document.createElement('span'); b.className = 'tree-badge ' + (LEVEL_CLASS[node.level] || 'lv-item'); b.textContent = node.level; t.appendChild(b); }
+      const lk = mplusLinks[node.o.id];
+      if (lk) { const a = document.createElement('a'); a.href = lk.u; a.target = '_blank'; a.rel = 'noopener'; a.textContent = node.o.title + ' \u2197'; t.appendChild(a); }
+      else t.appendChild(document.createTextNode(node.o.title));
+      const f = document.createElement('div'); f.className = 'obj-fonds';
+      f.textContent = node.code + ' \u00b7 ' + node.o.fonds;
+      main.appendChild(t); main.appendChild(f);
+      row.appendChild(main);
+      frag.appendChild(row);
+      if (expanded.has(node.code)) node.children.forEach(c => walk(c, depth + 1));
+    }
+    roots.forEach(r => walk(r, 0));
+    wrap.appendChild(frag);
+  }
+  bAll.addEventListener('click', () => { const add = n => { expanded.add(n.code); n.children.forEach(add); }; roots.forEach(add); draw(); });
+  bNone.addEventListener('click', () => { expanded.clear(); draw(); });
+  draw();
+}
+
 function openPanel(nameEn, nameTc, levelLabel, count) {
   document.getElementById('panelTitle').textContent = nameEn;
   document.getElementById('panelTitleTC').textContent = nameTc || '';
@@ -189,6 +282,12 @@ function openPanel(nameEn, nameTc, levelLabel, count) {
   const content = document.getElementById('panelContent');
   content.innerHTML = '';
   const list = objectsByLocation[nameEn] || [];
+  if (list.length && Object.keys(mplusLinks).length) {
+    renderObjTree(content, list);
+    content.scrollTop = 0;
+    panel.classList.add('open');
+    return;
+  }
   const frag = document.createDocumentFragment();
   list.slice(0, 200).forEach(o => {
     const row = document.createElement('div');
