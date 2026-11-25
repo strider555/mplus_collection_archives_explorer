@@ -63,6 +63,7 @@
 
     #mapHolder svg g.country-hl path { stroke: #ffffff; stroke-width: 1.5; }
     .pin-hl { fill: none; stroke: #ffffff; pointer-events: none; }
+    #pinLayer .pin-hl { fill: none; stroke: #ffffff; }
     .zoom-controls { position: absolute; top: 26px; left: 34px; display: flex; flex-direction: column; gap: 6px; z-index: 50; }
     .zoom-controls button {
       width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border);
@@ -527,7 +528,7 @@ async function init() {
   label.setAttribute('class', 'hk-label');
   label.textContent = 'Hong Kong';
   const hit = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-  hit.setAttribute('cx', hk.x); hit.setAttribute('cy', hk.y); hit.setAttribute('r', 15);
+  hit.setAttribute('cx', hk.x); hit.setAttribute('cy', hk.y); hit.setAttribute('r', 9.5);
   hit.style.fill = 'transparent';
   hit.style.stroke = 'none';
   hkGroup.appendChild(hit); hkGroup.appendChild(diamond); hkGroup.appendChild(label);
@@ -588,6 +589,7 @@ async function init() {
       `translate(${hk.x} ${hk.y}) scale(${(1 / k).toFixed(4)}) translate(${-hk.x} ${-hk.y})`);
   }
   function zoomAt(clientX, clientY, factor) {
+    if (viewAnim) return; // a fly-to tween is running; do not fight it
     const rect = holder.getBoundingClientRect();
     const px = (clientX - rect.left) / rect.width;
     const py = (clientY - rect.top) / rect.height;
@@ -632,6 +634,7 @@ async function init() {
       return;
     }
     const rect = holder.getBoundingClientRect();
+    if (viewAnim) return; // fly-to tween running; ignore pan until it lands
     view.x -= dx / rect.width * view.w;
     view.y -= dy / rect.height * view.h;
     clampView(); applyView();
@@ -658,6 +661,7 @@ async function init() {
     zoomAt(r.left + r.width / 2, r.top + r.height / 2, 1.47);
   });
   document.getElementById('zoomReset').addEventListener('click', () => {
+    if (viewAnim) { cancelAnimationFrame(viewAnim); viewAnim = null; }
     view = { ...FULL }; applyView(); hidePinHL(); hideCountryHL();
   });
 }
