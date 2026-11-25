@@ -320,6 +320,7 @@ async function init() {
   const hit = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
   hit.setAttribute('cx', hk.x); hit.setAttribute('cy', hk.y); hit.setAttribute('r', 15);
   hit.style.fill = 'transparent';
+  hit.style.stroke = 'none';
   hkGroup.appendChild(hit); hkGroup.appendChild(diamond); hkGroup.appendChild(label);
   hkGroup.style.cursor = 'pointer';
   hkGroup.addEventListener('click', () => { window.location.href = './hkmap.html'; });
