@@ -435,7 +435,7 @@ async function init() {
     fetch('./data/map-world.json?v=2').then(r => r.json()),
     fetch('./data/map-world-objects.json?v=2').then(r => r.json()),
     fetch('./data/mplus-links.json?v=2').then(r => r.json()).catch(() => ({})),
-    fetch('./data/mplus-images.json?v=2').then(r => r.json()).catch(() => ({}))
+    fetch('./data/mplus-images.json?v=3').then(r => r.json()).catch(() => ({}))
   ]);
   objectsByLocation = objects;
   mplusLinks = links;

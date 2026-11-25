@@ -529,7 +529,7 @@ async function init() {
     fetch('./data/map-hk-pins.json?v=2').then(r => r.json()),
     buildStyle(),
     fetch('./data/mplus-links.json?v=2').then(r => r.json()).catch(() => ({})),
-    fetch('./data/mplus-images.json?v=2').then(r => r.json()).catch(() => ({}))
+    fetch('./data/mplus-images.json?v=3').then(r => r.json()).catch(() => ({}))
   ]);
   hkData = data;
   objectsByKey = objects;
