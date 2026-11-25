@@ -103,7 +103,10 @@ function initGraph() {
   if (!GRAPH) return;
   const wrap = $('#graphWrap'), canvas = $('#graphCanvas');
   const maxC = Math.max(...GRAPH.nodes.map(n => n.count));
-  graphNodes = GRAPH.nodes.map(n => ({ ...n, r: Math.max(8, 10 + 30 * Math.sqrt(n.count / maxC)), x: 0, y: 0, vx: 0, vy: 0 }));
+  graphNodes = GRAPH.nodes.map(n => {
+    const lines = labelLines(n.label);
+    return { ...n, lines, half: Math.max(...lines.map(l => l.length)) * 3.3 + 10, r: Math.max(8, 10 + 30 * Math.sqrt(n.count / maxC)), x: 0, y: 0, vx: 0, vy: 0 };
+  });
   const byIdG = {}; graphNodes.forEach(n => byIdG[n.id] = n);
   graphLinks = GRAPH.links.map(l => ({ a: byIdG[l.a], b: byIdG[l.b], w: l.w })).filter(l => l.a && l.b);
   let W = wrap.clientWidth, H = wrap.clientHeight;
@@ -112,8 +115,9 @@ function initGraph() {
     n.x = W / 2 + Math.cos(ang) * rad; n.y = H / 2 + Math.sin(ang) * rad;
   });
   function clamp(p) {
-    p.x = Math.max(p.r + 6, Math.min(W - p.r - 6, p.x));
-    p.y = Math.max(p.r + 6, Math.min(H - p.r - 48, p.y));
+    const mx = Math.max(p.r + 6, p.half);
+    p.x = Math.max(mx, Math.min(W - mx, p.x));
+    p.y = Math.max(p.r + 6, Math.min(H - p.r - 58, p.y));
   }
   function step() {
     const n = graphNodes;
@@ -122,7 +126,7 @@ function initGraph() {
       let dx = a.x - b.x, dy = a.y - b.y; let d2 = dx * dx + dy * dy || 1;
       const f = Math.min(0.9, 3400 / d2); dx *= f; dy *= f;
       a.vx += dx; a.vy += dy; b.vx -= dx; b.vy -= dy;
-      const d = Math.sqrt(d2), min = a.r + b.r + 20;
+      const d = Math.sqrt(d2), min = a.r + b.r + 28;
       if (d < min && d > 0.01) { const push = (min - d) / d * 0.25; const ox = (a.x - b.x) * push, oy = (a.y - b.y) * push; a.x += ox; a.y += oy; b.x -= ox; b.y -= oy; }
     }
     graphLinks.forEach(l => {
@@ -158,7 +162,7 @@ function initGraph() {
       ctx.fill(); ctx.globalAlpha = 1;
       if (hover === p) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.6; ctx.stroke(); }
       ctx.textAlign = 'center'; ctx.font = '10.5px Inter, sans-serif';
-      const lines = labelLines(p.label);
+      const lines = p.lines;
       lines.forEach((ln, i) => {
         const y = p.y + p.r + 13 + i * 12;
         ctx.strokeStyle = 'rgba(8,8,12,0.85)'; ctx.lineWidth = 3; ctx.strokeText(ln, p.x, y);
