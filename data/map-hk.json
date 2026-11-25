@@ -203,6 +203,12 @@
    "count": 241
   },
   {
+   "key": "Kornhill",
+   "name_en": "Kornhill",
+   "name_tc": "康怡花園",
+   "count": 163
+  },
+  {
    "key": "Bond Centre",
    "name_en": "Bond Centre",
    "name_tc": "奔達中心",
@@ -237,12 +243,6 @@
    "name_en": "Peak Tower",
    "name_tc": "",
    "count": 36
-  },
-  {
-   "key": "康怡花園",
-   "name_en": "",
-   "name_tc": "康怡花園",
-   "count": 34
   },
   {
    "key": "Hutchison House",
@@ -393,12 +393,6 @@
    "name_en": "Graduate House",
    "name_tc": "大學",
    "count": 5
-  },
-  {
-   "key": "顯示某大樓",
-   "name_en": "",
-   "name_tc": "顯示某大樓",
-   "count": 4
   },
   {
    "key": "Exchange Square III",
