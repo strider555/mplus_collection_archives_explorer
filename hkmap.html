@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.css" rel="stylesheet">
   <style>
     :root {
       --bg: #0d1117; --surface: #161b22; --card: #1a1f2e; --border: #30363d;
@@ -33,21 +34,28 @@
 
     .layout { display: flex; align-items: stretch; max-width: 1360px; margin: 0 auto; }
     .map-area { flex: 1; min-width: 0; padding: 18px 10px 10px 24px; }
-    #hkSvg { width: 100%; height: auto; display: block; }
-    #hkSvg path.district { stroke: #30363d; stroke-width: 0.7; cursor: pointer; }
-    #hkSvg path.district:hover { stroke: #e6e8eb; stroke-width: 1.2; }
-    #hkSvg text {
-      font-family: 'Inter', sans-serif; text-anchor: middle; pointer-events: none;
-      paint-order: stroke; stroke: #0d1117; stroke-width: 3px;
+    .map-box { position: relative; }
+    #map {
+      width: 100%; height: calc(100vh - 176px); min-height: 500px;
+      border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: #0d1117;
     }
-    #hkSvg .lbl-en { font-size: 11px; font-weight: 600; fill: #e6e8eb; }
-    #hkSvg .lbl-tc { font-size: 11px; fill: #c9ced6; }
-    #hkSvg .lbl-zero { fill: #6e7681; }
-    #hkSvg circle.pin { stroke: #0d1117; stroke-width: 1.3; cursor: pointer; fill-opacity: 0.94; }
-    #hkSvg circle.pin:hover { stroke: #ffffff; stroke-width: 1.8; }
+    #map .maplibregl-canvas { outline: none; }
+    .map-loading {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      color: var(--muted); font-size: 14px; z-index: 5; pointer-events: none;
+    }
+    .landsd-badge {
+      position: absolute; left: 10px; bottom: 10px; z-index: 6;
+      background: rgba(13,17,23,0.82); border: 1px solid var(--border); border-radius: 6px;
+      color: var(--muted); font-size: 11px; padding: 4px 9px; pointer-events: none;
+    }
+    .map-hint { color: var(--muted); font-size: 12px; padding: 8px 4px 0; }
     .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin: 0 4px 0 10px; vertical-align: -1px; }
     .dot.first { margin-left: 8px; }
-    .map-hint { color: var(--muted); font-size: 12px; padding: 4px 4px 0; }
+    .maplibregl-ctrl-attrib { background: rgba(13,17,23,0.75) !important; color: var(--muted) !important; font-size: 10px !important; }
+    .maplibregl-ctrl-attrib a { color: var(--muted) !important; }
+    .maplibregl-ctrl-group { background: rgba(22,27,34,0.92) !important; border: 1px solid var(--border); box-shadow: none !important; }
+    .maplibregl-ctrl-group button { filter: invert(0.85); }
 
     .sidebar {
       width: 350px; flex-shrink: 0; border-left: 1px solid var(--border);
@@ -86,11 +94,11 @@
     .tooltip .tm { color: var(--muted); line-height: 1.5; }
 
     footer { padding: 14px 32px 22px; color: var(--muted); font-size: 12px; text-align: center; border-top: 1px solid var(--border); }
-    .loading { text-align: center; color: var(--muted); padding: 60px 0; font-size: 14px; }
 
     @media (max-width: 900px) {
       .layout { flex-direction: column; }
       .map-area { padding: 14px 14px 6px; }
+      #map { height: 62vh; min-height: 380px; }
       .sidebar { width: 100%; border-left: none; border-top: 1px solid var(--border); max-height: none; position: static; }
     }
   </style>
@@ -100,7 +108,7 @@
 <header>
   <div>
     <h1>Hong Kong Map — M+ Collection Archives</h1>
-    <div class="subtitle">The Hong Kong objects by district — districts named in object titles, shaded by object count</div>
+    <div class="subtitle">The Hong Kong objects by district — on the Lands Department basemap; zoom in to street level</div>
   </div>
   <div class="nav-links">
     <a href="./index.html">← Explorer</a>
@@ -110,22 +118,30 @@
 
 <div class="layout">
   <div class="map-area">
-    <div id="mapHolder"><div class="loading" id="loadingMsg">Loading map…</div></div>
-    <div class="map-hint">Click a district or a pin to list its objects.<span class="dot first" style="background:#4ecdc4"></span>Street 街道<span class="dot" style="background:#ff6b6b"></span>Building 建築物 — 50 located streets &amp; buildings are pinned; the rest appear in the panel only.</div>
+    <div class="map-box">
+      <div id="map"></div>
+      <div class="map-loading" id="loadingMsg">Loading map…</div>
+      <div class="landsd-badge">地圖資料 © 地政總署 Lands Department</div>
+    </div>
+    <div class="map-hint">Zoom in to street level. Click a district or a pin to list its objects.<span class="dot first" style="background:#4ecdc4"></span>Street 街道<span class="dot" style="background:#ff6b6b"></span>Building 建築物 — 50 located streets &amp; buildings are pinned; the rest appear in the panel only.</div>
   </div>
   <aside class="sidebar" id="sidebar"></aside>
 </div>
 
-<footer>District boundaries: © Lands Department / DATA.GOV.HK — Hong Kong Administrative Boundaries dataset · Street &amp; building locations: OpenStreetMap contributors / Wikidata · Collection data: M+ (CC0)</footer>
+<footer>Basemap &amp; street labels: © Lands Department — Map API, Hong Kong GeoData Store · District boundaries: © Lands Department / DATA.GOV.HK · Street &amp; building locations: OpenStreetMap contributors / Wikidata · Collection data: M+ (CC0)</footer>
 
 <div class="tooltip" id="tooltip"></div>
 
+<script src="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.js"></script>
 <script>
 const tooltip = document.getElementById('tooltip');
 const sidebar = document.getElementById('sidebar');
 let hkData = null;
 let objectsByKey = {};
 let pinList = [];
+
+const BASE_STYLE_URL = 'https://mapapi.hkmapservice.gov.hk/gs/api/v1.0.0/vt/basemap/WGS84/resources/styles/root_dark.json';
+const LABEL_STYLE_URL = 'https://mapapi.hkmapservice.gov.hk/gs/api/v1.0.0/vt/label/hk/tc/WGS84/resources/styles/root_dark.json';
 
 function goldColor(count, max) {
   const t = Math.log(1 + count) / Math.log(1 + max);
@@ -146,7 +162,7 @@ function showTooltip(title, body, x, y) {
 }
 function hideTooltip() { tooltip.style.opacity = '0'; }
 
-/* ---------- sidebar views ---------- */
+/* ---------- sidebar views (unchanged from the first version) ---------- */
 function renderLists() {
   sidebar.innerHTML = '';
   [['streets', 'Streets 街道'], ['buildings', 'Buildings 建築物']].forEach(([kind, heading]) => {
@@ -230,13 +246,48 @@ function showObjects(key, nameEn, nameTc, levelLabel, count, extraKeys) {
   sidebar.scrollTop = 0;
 }
 
+/* ---------- merged LandsD style: dark basemap + TC label layers ---------- */
+async function buildStyle() {
+  const abs = (u, base) => new URL(u, base).href.replace(/%7B/gi, '{').replace(/%7D/gi, '}');
+  const [bs, ls] = await Promise.all([
+    fetch(BASE_STYLE_URL).then(r => r.json()),
+    fetch(LABEL_STYLE_URL).then(r => r.json())
+  ]);
+  if (bs.sprite) bs.sprite = abs(bs.sprite, BASE_STYLE_URL);
+  Object.values(bs.sources || {}).forEach(s => { if (s.url) s.url = abs(s.url, BASE_STYLE_URL); });
+  const labelSource = ls.sources.esri;
+  if (labelSource && labelSource.url) labelSource.url = abs(labelSource.url, LABEL_STYLE_URL);
+  bs.sources['esri-label'] = labelSource;
+  // The label dataset's font service also serves every font the basemap uses.
+  bs.glyphs = abs(ls.glyphs, LABEL_STYLE_URL);
+  const labelLayers = ls.layers.map(l => ({ ...l, id: 'lbl/' + l.id, source: 'esri-label' }));
+  bs.layers = [...bs.layers, ...labelLayers];
+  return bs;
+}
+
+function largestCentre(geom) {
+  const polys = geom.type === 'Polygon' ? [geom.coordinates] : geom.coordinates;
+  let best = null, bestArea = -1;
+  polys.forEach(poly => {
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    poly[0].forEach(pt => {
+      x0 = Math.min(x0, pt[0]); x1 = Math.max(x1, pt[0]);
+      y0 = Math.min(y0, pt[1]); y1 = Math.max(y1, pt[1]);
+    });
+    const area = (x1 - x0) * (y1 - y0);
+    if (area > bestArea) { bestArea = area; best = [(x0 + x1) / 2, (y0 + y1) / 2]; }
+  });
+  return best;
+}
+
 /* ---------- map ---------- */
 async function init() {
-  const [geo, data, objects, pinsData] = await Promise.all([
+  const [geo, data, objects, pinsData, style] = await Promise.all([
     fetch('./data/hk_districts.json').then(r => r.json()),
     fetch('./data/map-hk.json').then(r => r.json()),
     fetch('./data/map-hk-objects.json').then(r => r.json()),
-    fetch('./data/map-hk-pins.json').then(r => r.json())
+    fetch('./data/map-hk-pins.json').then(r => r.json()),
+    buildStyle()
   ]);
   hkData = data;
   objectsByKey = objects;
@@ -245,134 +296,153 @@ async function init() {
   const counts = {};
   data.districts.forEach(d => { counts[d.name_en] = d; });
   const maxCount = Math.max(...data.districts.map(d => d.count));
-
-  // bounds
-  let minLng = 1e9, maxLng = -1e9, minLat = 1e9, maxLat = -1e9;
-  function scan(coords) {
-    if (typeof coords[0] === 'number') {
-      minLng = Math.min(minLng, coords[0]); maxLng = Math.max(maxLng, coords[0]);
-      minLat = Math.min(minLat, coords[1]); maxLat = Math.max(maxLat, coords[1]);
-    } else coords.forEach(scan);
-  }
-  geo.features.forEach(f => scan(f.geometry.coordinates));
-
-  const W = 1000, H = 640, PAD = 18;
-  const scale = Math.min((W - 2 * PAD) / (maxLng - minLng), (H - 2 * PAD) / (maxLat - minLat));
-  const offX = (W - (maxLng - minLng) * scale) / 2;
-  const offY = (H - (maxLat - minLat) * scale) / 2;
-  const X = lng => offX + (lng - minLng) * scale;
-  const Y = lat => offY + (maxLat - lat) * scale;
-
-  function ringPath(ring) {
-    return ring.map((pt, i) => `${i ? 'L' : 'M'}${X(pt[0]).toFixed(1)},${Y(pt[1]).toFixed(1)}`).join('') + 'Z';
-  }
-  function geomPath(geom) {
-    if (geom.type === 'Polygon') return geom.coordinates.map(ringPath).join('');
-    if (geom.type === 'MultiPolygon') return geom.coordinates.map(poly => poly.map(ringPath).join('')).join('');
-    return '';
-  }
-  function largestCentre(geom) {
-    const polys = geom.type === 'Polygon' ? [geom.coordinates] : geom.coordinates;
-    let best = null, bestArea = -1;
-    polys.forEach(poly => {
-      let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
-      poly[0].forEach(pt => {
-        x0 = Math.min(x0, pt[0]); x1 = Math.max(x1, pt[0]);
-        y0 = Math.min(y0, pt[1]); y1 = Math.max(y1, pt[1]);
-      });
-      const area = (x1 - x0) * (y1 - y0);
-      if (area > bestArea) { bestArea = area; best = [(x0 + x1) / 2, (y0 + y1) / 2]; }
-    });
-    return [X(best[0]), Y(best[1])];
-  }
-
-  const svgNS = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(svgNS, 'svg');
-  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-  svg.setAttribute('id', 'hkSvg');
-
   geo.features.forEach(f => {
     const nameEn = (f.properties.NAME_EN || '').replace(/ District$/, '');
-    const nameTc = f.properties.NAME_TC || '';
     const rec = counts[nameEn];
-    const count = rec ? rec.count : 0;
-
-    const path = document.createElementNS(svgNS, 'path');
-    path.setAttribute('d', geomPath(f.geometry));
-    path.setAttribute('class', 'district');
-    path.setAttribute('fill-rule', 'evenodd');
-    path.style.fill = count > 0 ? goldColor(count, maxCount) : '#161b22';
-    path.addEventListener('mouseenter', e => {
-      showTooltip(`${nameEn} ${nameTc}`,
-        count > 0 ? `${fmt(count)} objects — click to list` : 'No objects in the archives data',
-        e.clientX, e.clientY);
-    });
-    path.addEventListener('mousemove', e => {
-      tooltip.style.left = Math.min(e.clientX + 14, window.innerWidth - 290) + 'px';
-      tooltip.style.top = Math.min(e.clientY + 12, window.innerHeight - 110) + 'px';
-    });
-    path.addEventListener('mouseleave', hideTooltip);
-    path.addEventListener('click', () => showObjects(nameEn, nameEn, nameTc, 'District', count));
-    svg.appendChild(path);
-
-    const [cx, cy] = largestCentre(f.geometry);
-    const t1 = document.createElementNS(svgNS, 'text');
-    t1.setAttribute('x', cx); t1.setAttribute('y', cy - 1);
-    t1.setAttribute('class', 'lbl-en' + (count ? '' : ' lbl-zero'));
-    t1.textContent = nameEn;
-    const t2 = document.createElementNS(svgNS, 'text');
-    t2.setAttribute('x', cx); t2.setAttribute('y', cy + 12);
-    t2.setAttribute('class', 'lbl-tc' + (count ? '' : ' lbl-zero'));
-    t2.textContent = nameTc;
-    svg.appendChild(t1); svg.appendChild(t2);
+    f.properties.name_en2 = nameEn;
+    f.properties.name_tc2 = f.properties.NAME_TC || '';
+    f.properties.count = rec ? rec.count : 0;
+    f.properties.fill = rec ? goldColor(rec.count, maxCount) : '#161b22';
   });
+  const labelFC = {
+    type: 'FeatureCollection',
+    features: geo.features.map(f => ({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: largestCentre(f.geometry) },
+      properties: { name_en2: f.properties.name_en2, name_tc2: f.properties.name_tc2 }
+    }))
+  };
 
-  // pins layer (streets & buildings), drawn on top of the districts
-  const maxPin = Math.max(...pinList.map(p => p.count));
-  const posGroups = {};
+  // pins GeoJSON; pins sharing one point are spread on a small ring
+  const groups = {};
   pinList.forEach(p => {
     const k = p.lat.toFixed(6) + ',' + p.lng.toFixed(6);
-    (posGroups[k] = posGroups[k] || []).push(p);
+    (groups[k] = groups[k] || []).push(p);
   });
-  const pinPos = new Map();
-  Object.values(posGroups).forEach(g => {
-    if (g.length === 1) { pinPos.set(g[0], [X(g[0].lng), Y(g[0].lat)]); return; }
-    g.forEach((p, i) => {
-      const a = (2 * Math.PI * i) / g.length - Math.PI / 2;
-      pinPos.set(p, [X(p.lng) + 7 * Math.cos(a), Y(p.lat) + 7 * Math.sin(a)]);
-    });
-  });
-  const pinLayer = document.createElementNS(svgNS, 'g');
-  [...pinList].sort((a, b) => b.count - a.count).forEach(p => {
-    const [cx, cy] = pinPos.get(p);
-    const r = 4.2 + 3.4 * (Math.log(1 + p.count) / Math.log(1 + maxPin));
-    const c = document.createElementNS(svgNS, 'circle');
-    c.setAttribute('cx', cx.toFixed(1)); c.setAttribute('cy', cy.toFixed(1));
-    c.setAttribute('r', r.toFixed(1));
-    c.setAttribute('class', 'pin');
-    c.style.fill = p.level === 'street' ? '#4ecdc4' : '#ff6b6b';
-    const label = p.level === 'street' ? 'Street' : 'Building';
-    c.addEventListener('mouseenter', e => {
-      showTooltip(`${p.name_en || p.name_tc}${p.name_en && p.name_tc ? ' ' + p.name_tc : ''}`,
-        `${label} · ${fmt(p.count)} objects — click to list${p.note ? ' · ' + p.note : ''}`,
-        e.clientX, e.clientY);
-    });
-    c.addEventListener('mousemove', e => {
-      tooltip.style.left = Math.min(e.clientX + 14, window.innerWidth - 290) + 'px';
-      tooltip.style.top = Math.min(e.clientY + 12, window.innerHeight - 110) + 'px';
-    });
-    c.addEventListener('mouseleave', hideTooltip);
-    c.addEventListener('click', () =>
-      showObjects(p.keys[0], p.name_en, p.name_tc, label, p.count, p.keys.slice(1)));
-    pinLayer.appendChild(c);
-  });
-  svg.appendChild(pinLayer);
+  const pinFC = {
+    type: 'FeatureCollection',
+    features: pinList.map(p => {
+      let lng = p.lng, lat = p.lat;
+      const g = groups[p.lat.toFixed(6) + ',' + p.lng.toFixed(6)];
+      if (g.length > 1) {
+        const i = g.indexOf(p);
+        const a = (2 * Math.PI * i) / g.length - Math.PI / 2;
+        lng += 0.00055 * Math.cos(a);
+        lat += 0.0005 * Math.sin(a);
+      }
+      return {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [lng, lat] },
+        properties: {
+          name_en: p.name_en, name_tc: p.name_tc, level: p.level,
+          count: p.count, note: p.note || '', keys: JSON.stringify(p.keys)
+        }
+      };
+    })
+  };
 
-  const holder = document.getElementById('mapHolder');
-  holder.innerHTML = '';
-  holder.appendChild(svg);
+  const map = new maplibregl.Map({
+    container: 'map',
+    style,
+    bounds: [[113.82, 22.12], [114.51, 22.58]],
+    fitBoundsOptions: { padding: 18 },
+    minZoom: 9,
+    maxZoom: 19,
+    maxBounds: [[113.55, 21.85], [114.75, 22.8]],
+    attributionControl: { compact: true },
+    dragRotate: false,
+    pitchWithRotate: false,
+    touchPitch: false
+  });
+  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 
-  renderLists();
+  let loaded = false;
+  setTimeout(() => {
+    if (!loaded) document.getElementById('loadingMsg').textContent =
+      'The Lands Department basemap is taking long to load — please check the connection and reload.';
+  }, 25000);
+
+  map.on('load', () => {
+    loaded = true;
+    document.getElementById('loadingMsg').style.display = 'none';
+
+    map.addSource('districts', { type: 'geojson', data: geo });
+    map.addLayer({
+      id: 'district-fill', type: 'fill', source: 'districts',
+      paint: {
+        'fill-color': ['get', 'fill'],
+        'fill-opacity': ['case', ['>', ['get', 'count'], 0], 0.48, 0.2]
+      }
+    });
+    map.addLayer({
+      id: 'district-line', type: 'line', source: 'districts',
+      paint: { 'line-color': 'rgba(230,168,23,0.55)', 'line-width': 1 }
+    });
+    map.addSource('district-labels', { type: 'geojson', data: labelFC });
+    map.addLayer({
+      id: 'district-label', type: 'symbol', source: 'district-labels',
+      layout: {
+        'text-field': '{name_en2}\n{name_tc2}',
+        'text-font': ['CYanHeiHK Bold'],
+        'text-size': 12.5,
+        'text-line-height': 1.3,
+        'text-allow-overlap': true
+      },
+      paint: {
+        'text-color': '#f2e7c8',
+        'text-halo-color': '#0d1117',
+        'text-halo-width': 1.7,
+        'text-opacity': ['interpolate', ['linear'], ['zoom'], 12.3, 1, 13.8, 0]
+      }
+    });
+
+    map.addSource('pins', { type: 'geojson', data: pinFC });
+    const pinPaint = colour => ({
+      'circle-radius': ['interpolate', ['linear'], ['get', 'count'], 1, 4, 60, 6.5, 550, 11],
+      'circle-color': colour,
+      'circle-opacity': 0.95,
+      'circle-stroke-color': '#0d1117',
+      'circle-stroke-width': 1.3
+    });
+    map.addLayer({ id: 'pin-street', type: 'circle', source: 'pins', filter: ['==', ['get', 'level'], 'street'], paint: pinPaint('#4ecdc4') });
+    map.addLayer({ id: 'pin-building', type: 'circle', source: 'pins', filter: ['==', ['get', 'level'], 'building'], paint: pinPaint('#ff6b6b') });
+
+    const pinAt = e => map.queryRenderedFeatures(e.point, { layers: ['pin-street', 'pin-building'] });
+
+    map.on('click', 'district-fill', e => {
+      if (pinAt(e).length) return; // a pin on top takes the click
+      const p = e.features[0].properties;
+      showObjects(p.name_en2, p.name_en2, p.name_tc2, 'District', p.count);
+    });
+    ['pin-street', 'pin-building'].forEach(id => {
+      map.on('click', id, e => {
+        const p = e.features[0].properties;
+        const keys = JSON.parse(p.keys);
+        showObjects(keys[0], p.name_en, p.name_tc, p.level === 'street' ? 'Street' : 'Building', p.count, keys.slice(1));
+      });
+      map.on('mouseenter', id, () => { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', id, () => { map.getCanvas().style.cursor = ''; hideTooltip(); });
+      map.on('mousemove', id, e => {
+        const p = e.features[0].properties;
+        showTooltip(
+          `${p.name_en || p.name_tc}${p.name_en && p.name_tc ? ' ' + p.name_tc : ''}`,
+          `${p.level === 'street' ? 'Street' : 'Building'} · ${fmt(p.count)} objects — click to list${p.note ? ' · ' + p.note : ''}`,
+          e.originalEvent.clientX, e.originalEvent.clientY);
+      });
+    });
+    map.on('mouseenter', 'district-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'district-fill', () => { map.getCanvas().style.cursor = ''; hideTooltip(); });
+    map.on('mousemove', 'district-fill', e => {
+      if (pinAt(e).length) { hideTooltip(); return; }
+      const p = e.features[0].properties;
+      showTooltip(
+        `${p.name_en2} ${p.name_tc2}`,
+        p.count > 0 ? `${fmt(p.count)} objects — click to list` : 'No objects in the archives data',
+        e.originalEvent.clientX, e.originalEvent.clientY);
+    });
+
+    renderLists();
+  });
 }
 
 init().catch(err => {
