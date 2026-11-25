@@ -263,6 +263,7 @@ async function init() {
     const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     const r = 3 + 9 * Math.sqrt(p.count / maxPin);
     circle.setAttribute('cx', p.x); circle.setAttribute('cy', p.y); circle.setAttribute('r', r.toFixed(1));
+    circle.dataset.baseR = r.toFixed(2);
     circle.setAttribute('class', 'pin');
     circle.style.fill = p.level === 'city' ? '#4ecdc4' : '#ff6b6b';
     circle.addEventListener('mouseenter', e => {
@@ -318,6 +319,16 @@ async function init() {
     const vb = `${view.x} ${view.y} ${view.w} ${view.h}`;
     svg.setAttribute('viewBox', vb);
     overlay.setAttribute('viewBox', vb);
+    // Pins and the Hong Kong marker keep a constant on-screen size: only the
+    // geography scales with zoom, so zooming in separates clusters instead of
+    // inflating the pins until they bury whole countries.
+    const k = FULL.w / view.w;
+    overlay.querySelectorAll('circle.pin').forEach(c => {
+      c.setAttribute('r', (parseFloat(c.dataset.baseR) / k).toFixed(2));
+      c.style.strokeWidth = (0.9 / k).toFixed(2);
+    });
+    hkGroup.setAttribute('transform',
+      `translate(${hk.x} ${hk.y}) scale(${(1 / k).toFixed(4)}) translate(${-hk.x} ${-hk.y})`);
   }
   function zoomAt(clientX, clientY, factor) {
     const rect = holder.getBoundingClientRect();
