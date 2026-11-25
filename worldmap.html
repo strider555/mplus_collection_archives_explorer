@@ -554,13 +554,14 @@ async function init() {
     view.x = Math.min(FULL.w - view.w * 0.85, Math.max(-view.w * 0.15, view.x));
     view.y = Math.min(FULL.h - view.h * 0.85, Math.max(-view.h * 0.15, view.y));
   }
-  let viewAnim = null;
+  let viewAnim = null, animToken = 0;
   function animateViewTo(cx, cy, targetW) {
     const from = { ...view };
     const w = Math.min(FULL.w, Math.max(90, targetW));
     const h = w * FULL.h / FULL.w;
     const to = { w, h, x: cx - w / 2, y: cy - h / 2 };
     if (viewAnim) cancelAnimationFrame(viewAnim);
+    const token = ++animToken;
     const t0 = performance.now(), dur = 650;
     const step = now => {
       const t = Math.min(1, (now - t0) / dur);
@@ -570,6 +571,10 @@ async function init() {
       if (t < 1) viewAnim = requestAnimationFrame(step); else viewAnim = null;
     };
     viewAnim = requestAnimationFrame(step);
+    // rAF stalls in background/occluded tabs; guarantee the end state.
+    setTimeout(() => {
+      if (token === animToken && viewAnim) { cancelAnimationFrame(viewAnim); viewAnim = null; view = { ...to }; clampView(); applyView(); }
+    }, dur + 150);
   }
   function applyView() {
     const vb = `${view.x} ${view.y} ${view.w} ${view.h}`;
