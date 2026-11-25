@@ -330,7 +330,11 @@ function recolourDark(layers) {
           ? { h: t.h, s: Math.min(t.s, 0.55), l: 0.055 + (1 - t.l) * 0.05 }
           : { h: t.h, s: t.s * 0.65, l: 0.055 + (1 - t.l) * 0.20 });
       } else if (k === 'line-color' || k === 'fill-outline-color' || k === 'icon-color' || k === 'circle-color') {
-        p[k] = remap(p[k], t => ({ h: t.h, s: t.s * 0.8, l: 0.30 + (1 - t.l) * 0.35 }));
+        p[k] = remap(p[k], t => {
+          let l = 0.30 + (1 - t.l) * 0.35;
+          if (t.h >= 15 && t.h <= 55) l = Math.min(l, 0.50);  // tame orange-gold roads
+          return { h: t.h, s: t.s * 0.55, l };
+        });
       } else if (k === 'text-color') {
         p[k] = remap(p[k], t => t.s < 0.25 ? { h: 220, s: 0.12, l: 0.87 } : { h: t.h, s: t.s, l: 0.62 });
       } else if (k === 'text-halo-color') {
@@ -446,7 +450,10 @@ async function init() {
       id: 'district-fill', type: 'fill', source: 'districts',
       paint: {
         'fill-color': ['get', 'fill'],
-        'fill-opacity': ['case', ['>', ['get', 'count'], 0], 0.48, 0.2]
+        'fill-opacity': ['interpolate', ['linear'], ['zoom'],
+          10, ['case', ['>', ['get', 'count'], 0], 0.48, 0.20],
+          13, ['case', ['>', ['get', 'count'], 0], 0.24, 0.10],
+          15.5, ['case', ['>', ['get', 'count'], 0], 0.10, 0.05]]
       }
     });
     map.addLayer({
