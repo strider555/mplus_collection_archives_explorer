@@ -66,6 +66,10 @@
     .sidebar h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--gold); margin: 14px 0 6px; }
     .sidebar h2:first-child { margin-top: 0; }
     .sidebar h2.district-group { cursor: pointer; user-select: none; }
+    .sidebar h2.kind-head { font-size: 15px; cursor: pointer; user-select: none; margin: 20px 0 4px; padding-bottom: 6px; border-bottom: 2px solid rgba(230,168,23,0.35); }
+    .sidebar h2.kind-head:first-child { margin-top: 0; }
+    .kind-box { margin-left: 10px; }
+    .kind-box h2.district-group { font-size: 12px; margin: 10px 0 4px; }
     .grp-arrow { display: inline-block; width: 14px; color: var(--muted); font-size: 10px; }
     .place-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; flex: none; align-self: center; }
     .rank-row {
@@ -197,57 +201,78 @@ function hideTooltip() { tooltip.style.opacity = '0'; }
 /* ---------- sidebar views (unchanged from the first version) ---------- */
 function renderLists() {
   sidebar.innerHTML = '';
-  const groups = new Map();
-  [['streets', 'Street'], ['buildings', 'Building']].forEach(([kind, label]) => {
-    hkData[kind].forEach(item => {
-      const dn = item.district || 'Other';
-      if (!groups.has(dn)) groups.set(dn, []);
-      groups.get(dn).push({ item, kind, label });
-    });
-  });
   const order = hkData.districts.map(d => d.name_en);
-  const names = [...groups.keys()].sort((a, b) => {
-    const ia = order.indexOf(a), ib = order.indexOf(b);
-    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
-  });
-  names.forEach(dn => {
-    const d = hkData.districts.find(x => x.name_en === dn);
-    const items = groups.get(dn).slice().sort((a, b) => b.item.count - a.item.count);
-    const h = document.createElement('h2');
-    h.className = 'district-group';
-    const arrow = document.createElement('span');
-    arrow.className = 'grp-arrow'; arrow.textContent = '▾';
-    h.appendChild(arrow);
-    h.appendChild(document.createTextNode(`${dn}${d && d.name_tc ? ' ' + d.name_tc : ''} · ${items.length}`));
+  // Two top-level kinds, Building first by default; districts nested under each.
+  [['buildings', 'Building', '建築物', '#ff6b6b'], ['streets', 'Street', '街道', '#4ecdc4']].forEach(([kind, label, labelTc, color]) => {
+    const all = hkData[kind];
+    if (!all.length) return;
+    const head = document.createElement('h2');
+    head.className = 'kind-head';
+    const harrow = document.createElement('span');
+    harrow.className = 'grp-arrow'; harrow.textContent = '▾';
+    head.appendChild(harrow);
+    const hdot = document.createElement('span');
+    hdot.className = 'place-dot'; hdot.style.background = color;
+    head.appendChild(hdot);
+    head.appendChild(document.createTextNode(`${label} ${labelTc} · ${all.length}`));
     const box = document.createElement('div');
-    h.addEventListener('click', () => {
+    box.className = 'kind-box';
+    head.addEventListener('click', () => {
       const closed = box.style.display === 'none';
       box.style.display = closed ? '' : 'none';
-      arrow.textContent = closed ? '▾' : '▸';
+      harrow.textContent = closed ? '▾' : '▸';
     });
-    sidebar.appendChild(h);
-    items.forEach(({ item, kind, label }) => {
-      const row = document.createElement('div');
-      row.className = 'rank-row';
-      const dot = document.createElement('span');
-      dot.className = 'place-dot';
-      dot.style.background = kind === 'streets' ? '#4ecdc4' : '#ff6b6b';
-      const name = document.createElement('span');
-      name.className = 'rank-name';
-      name.textContent = item.name_en || item.name_tc;
-      if (item.name_en && item.name_tc) {
-        const tc = document.createElement('span');
-        tc.className = 'tc';
-        tc.textContent = ' ' + item.name_tc;
-        name.appendChild(tc);
-      }
-      const count = document.createElement('span');
-      count.className = 'rank-count';
-      count.textContent = fmt(item.count);
-      row.appendChild(dot); row.appendChild(name); row.appendChild(count);
-      row.addEventListener('click', () =>
-        showObjects(item.key, item.name_en, item.name_tc, label, item.count, item.extra_keys || null));
-      box.appendChild(row);
+    sidebar.appendChild(head);
+    const groups = new Map();
+    all.forEach(item => {
+      const dn = item.district || 'Other';
+      if (!groups.has(dn)) groups.set(dn, []);
+      groups.get(dn).push(item);
+    });
+    const names = [...groups.keys()].sort((a, b) => {
+      const ia = order.indexOf(a), ib = order.indexOf(b);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+    });
+    names.forEach(dn => {
+      const d = hkData.districts.find(x => x.name_en === dn);
+      const items = groups.get(dn).slice().sort((a, b) => b.count - a.count);
+      const h = document.createElement('h2');
+      h.className = 'district-group';
+      const arrow = document.createElement('span');
+      arrow.className = 'grp-arrow'; arrow.textContent = '▾';
+      h.appendChild(arrow);
+      h.appendChild(document.createTextNode(`${dn}${d && d.name_tc ? ' ' + d.name_tc : ''} · ${items.length}`));
+      const dbox = document.createElement('div');
+      h.addEventListener('click', () => {
+        const closed = dbox.style.display === 'none';
+        dbox.style.display = closed ? '' : 'none';
+        arrow.textContent = closed ? '▾' : '▸';
+      });
+      box.appendChild(h);
+      items.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'rank-row';
+        const dot = document.createElement('span');
+        dot.className = 'place-dot';
+        dot.style.background = color;
+        const name = document.createElement('span');
+        name.className = 'rank-name';
+        name.textContent = item.name_en || item.name_tc;
+        if (item.name_en && item.name_tc) {
+          const tc = document.createElement('span');
+          tc.className = 'tc';
+          tc.textContent = ' ' + item.name_tc;
+          name.appendChild(tc);
+        }
+        const count = document.createElement('span');
+        count.className = 'rank-count';
+        count.textContent = fmt(item.count);
+        row.appendChild(dot); row.appendChild(name); row.appendChild(count);
+        row.addEventListener('click', () =>
+          showObjects(item.key, item.name_en, item.name_tc, label, item.count, item.extra_keys || null));
+        dbox.appendChild(row);
+      });
+      box.appendChild(dbox);
     });
     sidebar.appendChild(box);
   });
