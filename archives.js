@@ -85,41 +85,67 @@ function renderSidebar() {
   $('#sidePanel').querySelectorAll('[data-tag]').forEach(el => el.addEventListener('click', () => { location.hash = '#/tag/' + el.dataset.tag; }));
 }
 
-/* ---------- tag graph (canvas force layout) ---------- */
-let graphNodes = [], graphLinks = [], graphRAF = null;
+/* ---------- tag graph (canvas, precomputed static layout) ---------- */
+let graphNodes = [], graphLinks = [];
+function labelLines(label) {
+  if (label.length <= 16) return [label];
+  const words = label.split(' ');
+  if (words.length === 1) return [label];
+  let best = null, bestDiff = 1e9;
+  for (let i = 1; i < words.length; i++) {
+    const a = words.slice(0, i).join(' '), b = words.slice(i).join(' ');
+    const d = Math.abs(a.length - b.length);
+    if (d < bestDiff) { bestDiff = d; best = [a, b]; }
+  }
+  return best;
+}
 function initGraph() {
   if (!GRAPH) return;
   const wrap = $('#graphWrap'), canvas = $('#graphCanvas');
   const maxC = Math.max(...GRAPH.nodes.map(n => n.count));
-  graphNodes = GRAPH.nodes.map((n, i) => ({ ...n, r: Math.max(7, 9 + 30 * Math.sqrt(n.count / maxC)), x: 0, y: 0, vx: 0, vy: 0, idx: i }));
+  graphNodes = GRAPH.nodes.map(n => ({ ...n, r: Math.max(8, 10 + 30 * Math.sqrt(n.count / maxC)), x: 0, y: 0, vx: 0, vy: 0 }));
   const byIdG = {}; graphNodes.forEach(n => byIdG[n.id] = n);
   graphLinks = GRAPH.links.map(l => ({ a: byIdG[l.a], b: byIdG[l.b], w: l.w })).filter(l => l.a && l.b);
-  const W = wrap.clientWidth, H = wrap.clientHeight;
-  graphNodes.forEach((n, i) => { const ang = i / graphNodes.length * Math.PI * 2; const rad = Math.min(W, H) * 0.32 * (0.4 + 0.6 * ((i * 37) % 10) / 10); n.x = W / 2 + Math.cos(ang) * rad; n.y = H / 2 + Math.sin(ang) * rad; });
-
-  let hover = null, drag = null, downAt = null;
+  let W = wrap.clientWidth, H = wrap.clientHeight;
+  graphNodes.forEach((n, i) => {
+    const ang = i / graphNodes.length * Math.PI * 2, rad = Math.min(W, H) * 0.30 * (0.45 + 0.55 * ((i * 29) % 7) / 6);
+    n.x = W / 2 + Math.cos(ang) * rad; n.y = H / 2 + Math.sin(ang) * rad;
+  });
+  function clamp(p) {
+    p.x = Math.max(p.r + 6, Math.min(W - p.r - 6, p.x));
+    p.y = Math.max(p.r + 6, Math.min(H - p.r - 48, p.y));
+  }
   function step() {
     const n = graphNodes;
     for (let i = 0; i < n.length; i++) for (let j = i + 1; j < n.length; j++) {
-      const a = n[i], b = n[j]; let dx = a.x - b.x, dy = a.y - b.y; let d2 = dx * dx + dy * dy || 1;
-      const f = 2600 / d2; dx *= f; dy *= f; a.vx += dx; a.vy += dy; b.vx -= dx; b.vy -= dy;
+      const a = n[i], b = n[j];
+      let dx = a.x - b.x, dy = a.y - b.y; let d2 = dx * dx + dy * dy || 1;
+      const f = Math.min(0.9, 3400 / d2); dx *= f; dy *= f;
+      a.vx += dx; a.vy += dy; b.vx -= dx; b.vy -= dy;
+      const d = Math.sqrt(d2), min = a.r + b.r + 20;
+      if (d < min && d > 0.01) { const push = (min - d) / d * 0.25; const ox = (a.x - b.x) * push, oy = (a.y - b.y) * push; a.x += ox; a.y += oy; b.x -= ox; b.y -= oy; }
     }
     graphLinks.forEach(l => {
       const dx = l.b.x - l.a.x, dy = l.b.y - l.a.y; const d = Math.sqrt(dx * dx + dy * dy) || 1;
-      const rest = 110 + 260 / Math.sqrt(l.w); const f = (d - rest) / d * 0.012 * Math.min(6, Math.sqrt(l.w));
+      const rest = l.a.r + l.b.r + 55 + 130 / Math.sqrt(l.w);
+      const f = (d - rest) / d * 0.02 * Math.min(4, Math.sqrt(l.w));
       l.a.vx += dx * f; l.a.vy += dy * f; l.b.vx -= dx * f; l.b.vy -= dy * f;
     });
     n.forEach(p => {
-      p.vx += (W / 2 - p.x) * 0.0016; p.vy += (H / 2 - p.y) * 0.0016;
-      if (p !== drag) { p.x += p.vx; p.y += p.vy; }
-      p.vx *= 0.82; p.vy *= 0.82;
-      p.x = Math.max(p.r + 4, Math.min(W - p.r - 4, p.x)); p.y = Math.max(p.r + 4, Math.min(H - p.r - 16, p.y));
+      p.vx += (W / 2 - p.x) * 0.002; p.vy += (H / 2 - p.y) * 0.002;
+      p.x += p.vx; p.y += p.vy; p.vx *= 0.8; p.vy *= 0.8; clamp(p);
     });
   }
+  for (let k = 0; k < 700; k++) step();
+  graphNodes.forEach(p => { p.vx = p.vy = 0; });
+
+  let hover = null, drag = null, downAt = null;
+  function neighbours(p) { const s = new Set(); graphLinks.forEach(l => { if (l.a === p) s.add(l.b); if (l.b === p) s.add(l.a); }); return s; }
   function draw() {
     const dpr = window.devicePixelRatio || 1;
-    if (canvas.width !== Math.round(W * dpr)) { canvas.width = W * dpr; canvas.height = H * dpr; }
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
     const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+    const nb = hover ? neighbours(hover) : null;
     graphLinks.forEach(l => {
       const hot = hover && (l.a === hover || l.b === hover);
       ctx.strokeStyle = hot ? 'rgba(230,168,23,0.55)' : 'rgba(150,160,180,0.13)';
@@ -127,27 +153,34 @@ function initGraph() {
     });
     graphNodes.forEach(p => {
       ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = TAG_COLORS[p.type] || '#999'; ctx.globalAlpha = hover && hover !== p && !graphLinks.some(l => (l.a === hover && l.b === p) || (l.b === hover && l.a === p)) ? 0.35 : 0.92;
+      ctx.fillStyle = TAG_COLORS[p.type] || '#999';
+      ctx.globalAlpha = hover && hover !== p && !nb.has(p) ? 0.3 : 0.92;
       ctx.fill(); ctx.globalAlpha = 1;
       if (hover === p) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.6; ctx.stroke(); }
-      ctx.fillStyle = '#e8eaf0'; ctx.font = '11px Inter, sans-serif'; ctx.textAlign = 'center';
-      const label = p.label.length > 19 ? p.label.slice(0, 18) + '…' : p.label;
-      ctx.fillText(label, p.x, p.y + p.r + 14);
-      ctx.fillStyle = '#9aa0aa'; ctx.font = '10px Inter, sans-serif';
-      ctx.fillText(p.count.toLocaleString(), p.x, p.y + p.r + 27);
+      ctx.textAlign = 'center'; ctx.font = '10.5px Inter, sans-serif';
+      const lines = labelLines(p.label);
+      lines.forEach((ln, i) => {
+        const y = p.y + p.r + 13 + i * 12;
+        ctx.strokeStyle = 'rgba(8,8,12,0.85)'; ctx.lineWidth = 3; ctx.strokeText(ln, p.x, y);
+        ctx.fillStyle = '#e8eaf0'; ctx.fillText(ln, p.x, y);
+      });
+      const cy = p.y + p.r + 13 + lines.length * 12;
+      ctx.font = '10px Inter, sans-serif';
+      ctx.strokeStyle = 'rgba(8,8,12,0.85)'; ctx.lineWidth = 3; ctx.strokeText(p.count.toLocaleString(), p.x, cy);
+      ctx.fillStyle = '#a7adb8'; ctx.fillText(p.count.toLocaleString(), p.x, cy);
     });
   }
-  function loop() { step(); draw(); graphRAF = requestAnimationFrame(loop); }
-  loop();
-  setTimeout(() => { if (graphRAF && !drag) { /* keep animating gently; cheap at 47 nodes */ } }, 0);
-
+  draw();
   function pos(e) { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
-  function pick(p) { return graphNodes.find(n => (n.x - p.x) ** 2 + (n.y - p.y) ** 2 <= (n.r + 3) ** 2) || null; }
+  function pick(p) {
+    const hits = graphNodes.filter(n => (n.x - p.x) ** 2 + (n.y - p.y) ** 2 <= (n.r + 3) ** 2);
+    return hits.length ? hits.reduce((m, n) => n.r < m.r ? n : m) : null;
+  }
   canvas.addEventListener('pointerdown', e => { const p = pos(e); drag = pick(p); downAt = { ...p, node: drag }; if (drag) canvas.setPointerCapture(e.pointerId); });
   canvas.addEventListener('pointermove', e => {
     const p = pos(e);
-    if (drag) { drag.x = p.x; drag.y = p.y; drag.vx = drag.vy = 0; }
-    else { hover = pick(p); canvas.style.cursor = hover ? 'pointer' : 'grab'; }
+    if (drag) { drag.x = p.x; drag.y = p.y; clamp(drag); for (let k = 0; k < 3; k++) step(); draw(); }
+    else { const h = pick(p); if (h !== hover) { hover = h; canvas.style.cursor = hover ? 'pointer' : 'grab'; draw(); } }
   });
   canvas.addEventListener('pointerup', e => {
     const p = pos(e);
@@ -156,7 +189,7 @@ function initGraph() {
     }
     drag = null; downAt = null;
   });
-  window.addEventListener('resize', () => { /* positions stay; canvas refits next frame via W/H of wrap at load */ });
+  window.addEventListener('resize', () => { W = wrap.clientWidth; H = wrap.clientHeight; graphNodes.forEach(clamp); draw(); });
 }
 
 /* ---------- views ---------- */

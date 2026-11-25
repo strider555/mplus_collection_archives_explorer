@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>M+ Collection Archives Explorer — Architecture</title>
-  <link rel="stylesheet" href="./styles.css?v=3">
+  <link rel="stylesheet" href="./styles.css?v=4">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -31,7 +31,7 @@
     <section id="homeView" class="view active">
       <div class="stats-strip" id="statsStrip"></div>
       <div class="home-flex" id="homeFlex">
-        <aside class="side-panel" id="sidePanel"></aside>
+        <aside class="archives-side" id="sidePanel"></aside>
         <div class="graph-wrap" id="graphWrap">
           <canvas id="graphCanvas"></canvas>
           <div class="graph-hint">Tags of the 6,341 records — bubble size = record count, lines = tags appearing together. Click a bubble to see its records. Drag to rearrange.</div>
@@ -67,6 +67,6 @@
   <div class="modal-back" id="modalBack"></div>
   <div class="modal" id="itemModal"></div>
 
-  <script src="./archives.js?v=3"></script>
+  <script src="./archives.js?v=4"></script>
 </body>
 </html>
