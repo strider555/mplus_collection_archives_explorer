@@ -82,6 +82,24 @@
       font-size: 12px; padding: 5px 12px; cursor: pointer; font-family: 'Inter', sans-serif; margin-bottom: 14px;
     }
     .back-btn:hover { color: var(--text); border-color: var(--muted); }
+    .fp-btn {
+      background: rgba(230,168,23,0.10); border: 1px solid rgba(230,168,23,0.55); color: var(--gold);
+      border-radius: 20px; font-size: 12px; padding: 5px 14px; cursor: pointer; font-family: 'Inter', sans-serif;
+      margin: 2px 0 10px;
+    }
+    .fp-btn:hover { background: rgba(230,168,23,0.22); }
+    #fpBar {
+      position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 7;
+      display: none; align-items: center; gap: 12px; max-width: calc(100% - 20px);
+      background: rgba(13,17,23,0.88); border: 1px solid rgba(230,168,23,0.55); border-radius: 10px;
+      color: var(--text); font-size: 12px; padding: 7px 12px;
+    }
+    #fpBar.show { display: flex; }
+    #fpExit {
+      background: rgba(230,168,23,0.15); border: 1px solid rgba(230,168,23,0.6); color: var(--gold);
+      border-radius: 8px; font-size: 12px; padding: 4px 12px; cursor: pointer; font-family: inherit; white-space: nowrap;
+    }
+    #fpExit:hover { background: rgba(230,168,23,0.3); }
     .obj-head-title { font-size: 18px; font-weight: 700; line-height: 1.3; }
     .obj-head-tc { font-size: 13px; color: var(--muted); margin-top: 2px; }
     .obj-head-meta { font-size: 12px; color: var(--gold); margin: 8px 0 6px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
@@ -135,6 +153,7 @@
       <div id="cesiumContainer"></div>
       <div class="map-loading" id="loadingMsg">Loading 3D buildings from the Lands Department…<br>載入地政總署三維建築中，視乎網絡可能需時十數秒</div>
       <div class="landsd-badge">三維地圖 © 地政總署 Lands Department</div>
+      <div id="fpBar"><span>👤 第一人稱視角 — 拖曳環顧 · 滾輪前進／後退</span><button id="fpExit" type="button">退出 ✕</button></div>
     </div>
     <div class="map-hint"><span class="hint-line">Drag to orbit · scroll to zoom · right-drag to pan. Click a pin or a place in the list to fly to it and list its objects.</span><span class="hint-line"><span class="dot first" style="background:#4ecdc4"></span>Street 街道<span class="dot" style="background:#ff6b6b"></span>Building 建築物 — the same 50 pinned streets &amp; buildings as the 2D map, on the photorealistic 3D city model.</span><span class="hint-line">🖼️ Image preview available on M+ Collection</span></div>
   </div>
@@ -328,18 +347,107 @@ function highlightEntity(ent) {
 }
 function flyToPlace(lng, lat) {
   if (!viewer) return;
+  if (fp.active) exitFirstPerson(true);
   viewer.camera.flyTo({
     destination: Cesium.Cartesian3.fromDegrees(lng, lat - 0.0045, 950),
     orientation: { heading: Cesium.Math.toRadians(0), pitch: Cesium.Math.toRadians(-48), roll: 0 },
     duration: 1.6
   });
 }
+/* ---------- first-person view (trial case: Chung Chi Hall Student Centre) ---------- */
+const FP_CASES = new Set(['Chung Chi Hall Student Centre']);
+let currentPin = null;
+const fp = { active: false, heading: 0, pitch: 0, eyeHeight: 0, lng: 0, lat: 0, dragging: false, lastX: 0, lastY: 0 };
+const fpBar = document.getElementById('fpBar');
+document.getElementById('fpExit').addEventListener('click', () => exitFirstPerson(false));
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && fp.active) exitFirstPerson(false); });
+function destPoint(lng, lat, distM, bearingDeg) {
+  const R = 6371000, br = bearingDeg * Math.PI / 180, la1 = lat * Math.PI / 180, lo1 = lng * Math.PI / 180, d = distM / R;
+  const la2 = Math.asin(Math.sin(la1) * Math.cos(d) + Math.cos(la1) * Math.sin(d) * Math.cos(br));
+  const lo2 = lo1 + Math.atan2(Math.sin(br) * Math.sin(d) * Math.cos(la1), Math.cos(d) - Math.sin(la1) * Math.sin(la2));
+  return { lng: lo2 * 180 / Math.PI, lat: la2 * 180 / Math.PI };
+}
+function fpSetView() {
+  if (!viewer) return;
+  viewer.camera.setView({
+    destination: Cesium.Cartesian3.fromDegrees(fp.lng, fp.lat, fp.eyeHeight),
+    orientation: { heading: Cesium.Math.toRadians(fp.heading), pitch: Cesium.Math.toRadians(fp.pitch), roll: 0 }
+  });
+}
+async function enterFirstPerson(pin) {
+  if (!viewer || fp.active) return;
+  // Stand about 55 m south-east of the building (lakeside), looking back at its facade
+  const vp = destPoint(pin.lng, pin.lat, 55, 140);
+  let ground = null;
+  try {
+    const sampled = await viewer.scene.sampleHeightMostDetailed([Cesium.Cartographic.fromDegrees(vp.lng, vp.lat)]);
+    if (sampled && sampled[0] && isFinite(sampled[0].height)) ground = sampled[0].height;
+  } catch (e) { /* fall through to the simpler sampler */ }
+  if (ground === null) {
+    try { const h = viewer.scene.sampleHeight(Cesium.Cartographic.fromDegrees(vp.lng, vp.lat)); if (isFinite(h)) ground = h; } catch (e) { /* keep null */ }
+  }
+  if (ground === null) ground = 18;
+  fp.lng = vp.lng; fp.lat = vp.lat; fp.eyeHeight = ground + 1.7;
+  fp.heading = (140 + 180) % 360; fp.pitch = 1;
+  viewer.camera.flyTo({
+    destination: Cesium.Cartesian3.fromDegrees(fp.lng, fp.lat, fp.eyeHeight),
+    orientation: { heading: Cesium.Math.toRadians(fp.heading), pitch: Cesium.Math.toRadians(fp.pitch), roll: 0 },
+    duration: 1.8,
+    complete: () => {
+      fp.active = true;
+      viewer.scene.screenSpaceCameraController.enableInputs = false;
+      fpBar.classList.add('show');
+      fpSetView();
+    }
+  });
+}
+function exitFirstPerson(silent) {
+  fpBar.classList.remove('show');
+  if (!fp.active) return;
+  fp.active = false; fp.dragging = false;
+  if (viewer) viewer.scene.screenSpaceCameraController.enableInputs = true;
+  if (!silent && currentPin) flyToPlace(currentPin.lng, currentPin.lat);
+}
+function bindFirstPersonControls() {
+  const cvs = viewer.scene.canvas;
+  cvs.addEventListener('pointerdown', e => {
+    if (!fp.active) return;
+    fp.dragging = true; fp.lastX = e.clientX; fp.lastY = e.clientY;
+    try { cvs.setPointerCapture(e.pointerId); } catch (err) { /* not critical */ }
+  });
+  cvs.addEventListener('pointermove', e => {
+    if (!fp.active || !fp.dragging) return;
+    const dx = e.clientX - fp.lastX, dy = e.clientY - fp.lastY;
+    fp.lastX = e.clientX; fp.lastY = e.clientY;
+    fp.heading = (fp.heading + dx * 0.15) % 360;
+    fp.pitch = Math.max(-45, Math.min(60, fp.pitch - dy * 0.12));
+    fpSetView();
+  });
+  const stop = () => { fp.dragging = false; };
+  cvs.addEventListener('pointerup', stop);
+  cvs.addEventListener('pointercancel', stop);
+  cvs.addEventListener('wheel', e => {
+    if (!fp.active) return;
+    e.preventDefault();
+    const forward = e.deltaY < 0;
+    const np = destPoint(fp.lng, fp.lat, 3.5, forward ? fp.heading : (fp.heading + 180) % 360);
+    fp.lng = np.lng; fp.lat = np.lat;
+    fpSetView();
+  }, { passive: false });
+}
+
 function showObjects(key, nameEn, nameTc, levelLabel, count, extraKeys) {
   sidebar.innerHTML = '';
   const back = document.createElement('button');
   back.className = 'back-btn';
   back.textContent = '← Streets & Buildings';
-  back.addEventListener('click', () => { highlightEntity(null); renderLists(); });
+  back.addEventListener('click', () => {
+    const wasFp = fp.active;
+    if (wasFp) exitFirstPerson(true);
+    highlightEntity(null);
+    renderLists();
+    if (wasFp && currentPin) flyToPlace(currentPin.lng, currentPin.lat);
+  });
   sidebar.appendChild(back);
   const title = document.createElement('div');
   title.className = 'obj-head-title';
@@ -356,7 +464,15 @@ function showObjects(key, nameEn, nameTc, levelLabel, count, extraKeys) {
   meta.textContent = `${levelLabel} · ${fmt(count)} objects`;
   sidebar.appendChild(meta);
   const pin = pinList.find(pn => pn.keys && pn.keys.includes(key));
+  currentPin = pin || null;
   if (pin) { flyToPlace(pin.lng, pin.lat); highlightEntity(entityByKey.get(pin.keys[0]) || null); }
+  if (pin && FP_CASES.has(key)) {
+    const fpBtn = document.createElement('button');
+    fpBtn.className = 'fp-btn';
+    fpBtn.textContent = '👤 第一人稱視角';
+    fpBtn.addEventListener('click', () => enterFirstPerson(pin));
+    sidebar.appendChild(fpBtn);
+  }
   let list = (objectsByKey[key] || []).slice();
   if (extraKeys && extraKeys.length) {
     const seen = new Set(list.map(o => o.title + '|' + o.fonds));
@@ -462,8 +578,10 @@ function buildScene() {
     (pin.keys || []).forEach(k => entityByKey.set(k, ent));
   });
 
+  bindFirstPersonControls();
   const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
   handler.setInputAction(click => {
+    if (fp.active) return;
     const picked = viewer.scene.pick(click.position);
     if (picked && picked.id && picked.id._pin) {
       const pin = picked.id._pin;
