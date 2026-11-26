@@ -49,10 +49,6 @@
       background: rgba(13,17,23,0.82); border: 1px solid var(--border); border-radius: 6px;
       color: var(--muted); font-size: 11px; padding: 4px 9px; pointer-events: none;
     }
-    .lang-ctrl button {
-      width: auto; min-width: 36px; padding: 0 10px;
-      font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: #333;
-    }
     .map-hint { color: var(--muted); font-size: 12px; padding: 10px 4px 0; line-height: 1.8; }
     .hint-line { display: block; }
     .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin: 0 4px 0 10px; vertical-align: -1px; }
@@ -183,15 +179,6 @@ let flyToPoint = null, flyToBounds = null; // set once the map exists
 
 const BASE_STYLE_URL = 'https://mapapi.hkmapservice.gov.hk/gs/api/v1.0.0/vt/basemap/WGS84/resources/styles/root_dark.json';
 const LABEL_EN_URL = 'https://mapapi.hkmapservice.gov.hk/gs/api/v1.0.0/vt/label/hk/en/WGS84/resources/styles/root_dark.json';
-const LABEL_TC_URL = 'https://mapapi.hkmapservice.gov.hk/gs/api/v1.0.0/vt/label/hk/tc/WGS84/resources/styles/root_dark.json';
-let labelLang = 'en'; // map label language: 'en' (default) or 'tc', flipped by the map toggle
-function applyLabelLang() {
-  if (!hkMapRef || !hkMapRef.getStyle()) return;
-  (hkMapRef.getStyle().layers || []).forEach(l => {
-    if (l.id.startsWith('lbl-en/')) hkMapRef.setLayoutProperty(l.id, 'visibility', labelLang === 'en' ? 'visible' : 'none');
-    else if (l.id.startsWith('lbl-tc/')) hkMapRef.setLayoutProperty(l.id, 'visibility', labelLang === 'tc' ? 'visible' : 'none');
-  });
-}
 
 function goldColor(count, max) {
   const t = Math.log(1 + count) / Math.log(1 + max);
@@ -441,13 +428,12 @@ function showObjects(key, nameEn, nameTc, levelLabel, count, extraKeys) {
   sidebar.scrollTop = 0;
 }
 
-/* ---------- merged LandsD style: dark basemap + EN & TC label layers ---------- */
+/* ---------- merged LandsD style: dark basemap + EN label layers ---------- */
 async function buildStyle() {
   const abs = (u, base) => new URL(u, base).href.replace(/%7B/gi, '{').replace(/%7D/gi, '}');
-  const [bs, lsEn, lsTc] = await Promise.all([
+  const [bs, ls] = await Promise.all([
     fetch(BASE_STYLE_URL).then(r => r.json()),
-    fetch(LABEL_EN_URL).then(r => r.json()),
-    fetch(LABEL_TC_URL).then(r => r.json())
+    fetch(LABEL_EN_URL).then(r => r.json())
   ]);
   if (bs.sprite) bs.sprite = abs(bs.sprite, BASE_STYLE_URL);
   // Use explicit absolute tile URLs instead of the TileJSON endpoint: the
@@ -462,22 +448,13 @@ async function buildStyle() {
     }
   };
   Object.values(bs.sources || {}).forEach(s => toTiles(s, BASE_STYLE_URL));
-  // Both official label datasets are merged in; the toggle flips layer
-  // visibility. English is the default (the site's data is English-first).
-  const enSource = lsEn.sources.esri;
-  toTiles(enSource, LABEL_EN_URL);
-  bs.sources['esri-label-en'] = enSource;
-  const tcSource = lsTc.sources.esri;
-  toTiles(tcSource, LABEL_TC_URL);
-  bs.sources['esri-label-tc'] = tcSource;
-  // The EN label dataset's font service serves every font both label sets use.
-  bs.glyphs = abs(lsEn.glyphs, LABEL_EN_URL);
-  const enLayers = lsEn.layers.map(l => ({ ...l, id: 'lbl-en/' + l.id, source: 'esri-label-en' }));
-  const tcLayers = lsTc.layers.map(l => ({
-    ...l, id: 'lbl-tc/' + l.id, source: 'esri-label-tc',
-    layout: { ...(l.layout || {}), visibility: 'none' }
-  }));
-  bs.layers = [...bs.layers, ...enLayers, ...tcLayers];
+  const labelSource = ls.sources.esri;
+  toTiles(labelSource, LABEL_EN_URL);
+  bs.sources['esri-label'] = labelSource;
+  // The label dataset's font service also serves every font the basemap uses.
+  bs.glyphs = abs(ls.glyphs, LABEL_EN_URL);
+  const labelLayers = ls.layers.map(l => ({ ...l, id: 'lbl/' + l.id, source: 'esri-label' }));
+  bs.layers = [...bs.layers, ...labelLayers];
   recolourDark(bs.layers);
   return bs;
 }
@@ -649,28 +626,6 @@ async function init() {
     touchPitch: false
   });
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
-  // Label-language toggle: English (default) <-> Traditional Chinese
-  const langCtrl = {
-    onAdd() {
-      const div = document.createElement('div');
-      div.className = 'maplibregl-ctrl maplibregl-ctrl-group lang-ctrl';
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.textContent = '繁中';
-      btn.title = 'Switch map labels to Traditional Chinese';
-      btn.addEventListener('click', () => {
-        labelLang = labelLang === 'en' ? 'tc' : 'en';
-        applyLabelLang();
-        btn.textContent = labelLang === 'en' ? '繁中' : 'EN';
-        btn.title = labelLang === 'en' ? 'Switch map labels to Traditional Chinese' : 'Switch map labels to English';
-      });
-      div.appendChild(btn);
-      this._div = div;
-      return div;
-    },
-    onRemove() { this._div.remove(); }
-  };
-  map.addControl(langCtrl, 'top-left');
 
   let loaded = false;
   setTimeout(() => {
