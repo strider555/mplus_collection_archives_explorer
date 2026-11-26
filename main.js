@@ -547,13 +547,69 @@ function showSidePanel(tagId) {
     }
   }
   renderPanelBatch();
+  registerPanelView('tag:' + tagId, tagId, () => showSidePanel(tagId));
   // Show panel
   panel.classList.add('open');
+}
+
+/* ---------- panel navigation history: Back button + breadcrumb path ---------- */
+const panelNavStack = [];
+let panelNavRestoring = false;
+function registerPanelView(key, label, restore) {
+  if (panelNavRestoring) return;
+  const top = panelNavStack[panelNavStack.length - 1];
+  if (top && top.key === key) { top.label = label; top.restore = restore; }
+  else panelNavStack.push({ key, label, restore });
+  renderPanelNav();
+}
+function restorePanelView(entry) {
+  panelNavRestoring = true;
+  try { entry.restore(); } finally { panelNavRestoring = false; }
+  renderPanelNav();
+}
+function panelGoBack() {
+  if (panelNavStack.length < 2) return;
+  panelNavStack.pop();
+  restorePanelView(panelNavStack[panelNavStack.length - 1]);
+}
+function panelGoTo(idx) {
+  if (idx < 0 || idx >= panelNavStack.length - 1) return;
+  panelNavStack.length = idx + 1;
+  restorePanelView(panelNavStack[idx]);
+}
+function renderPanelNav() {
+  const bar = document.getElementById('panelNav');
+  if (!bar) return;
+  const backBtn = document.getElementById('panelBackBtn');
+  if (backBtn && !backBtn._bound) {
+    backBtn._bound = true;
+    backBtn.addEventListener('click', (e) => { e.stopPropagation(); panelGoBack(); });
+  }
+  if (panelNavStack.length < 2) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  const crumbs = document.getElementById('panelCrumbs');
+  crumbs.innerHTML = '';
+  panelNavStack.forEach((entry, i) => {
+    if (i > 0) {
+      const sep = document.createElement('span');
+      sep.className = 'crumb-sep'; sep.textContent = '›';
+      crumbs.appendChild(sep);
+    }
+    const c = document.createElement('span');
+    const isCurrent = i === panelNavStack.length - 1;
+    c.className = 'crumb' + (isCurrent ? ' current' : '');
+    c.textContent = entry.label;
+    c.title = entry.label;
+    if (!isCurrent) c.addEventListener('click', () => panelGoTo(i));
+    crumbs.appendChild(c);
+  });
 }
 
 // Close side panel
 function closeSidePanel() {
   document.getElementById('sidePanel').classList.remove('open');
+  panelNavStack.length = 0;
+  renderPanelNav();
 }
 
 // Find all objects by person name — primary artist credit or any credited contributor
@@ -748,6 +804,7 @@ function showArtistPanel(artistId) {
     grid.appendChild(card);
   });
 
+  registerPanelView('artist:' + artistId, document.getElementById('panelTitle').textContent, () => showArtistPanel(artistId));
   // Show panel
   panel.classList.add('open');
 }
@@ -974,6 +1031,7 @@ function showArchivePanel(archiveName) {
 
   try { updateResearchGuideBtn(archive.name); } catch (e) { console.error('[archives] RG btn failed', e); }
 
+  registerPanelView('archive:' + archiveName, archiveName, () => showArchivePanel(archiveName));
   // Show panel
   panel.classList.add('open');
 }
@@ -1121,6 +1179,7 @@ function showArtworkPanel(artworkId) {
   });
   grid.appendChild(detailsCard);
 
+  registerPanelView('artwork:' + artworkId, (lkImg && lkImg.n) || artwork.title || 'Object', () => showArtworkPanel(artworkId));
   // Show panel
   panel.classList.add('open');
 }
@@ -1558,6 +1617,7 @@ function showMultiSelectPanel() {
   detailsBtn.classList.remove('disabled');
   detailsBtn.style.display = 'block';
 
+  registerPanelView('multi:' + [...selectedTags].sort().join('|'), title.textContent, () => showMultiSelectPanel());
   panel.classList.add('open');
 }
 
