@@ -528,8 +528,8 @@ function showObjects(key, nameEn, nameTc, levelLabel, count, extraKeys) {
 async function runFpSurvey() {
   const pin = pinList.find(p => (p.keys || []).includes('Chung Chi Hall Student Centre'));
   if (!pin || !viewer) return;
-  sidebar.innerHTML = '<h2>FP viewpoint survey — sampling…</h2>';
-  const bearings = [120, 150, 180, 210, 240], dists = [12, 16, 20, 26, 34];
+  sidebar.innerHTML = '<h2>FP viewpoint survey (north) — sampling…</h2>';
+  const bearings = [270, 300, 330, 0, 30, 60, 90], dists = [12, 16, 20, 26, 34];
   const cands = [];
   bearings.forEach(b => dists.forEach(d => cands.push({ b, d, vp: destPoint(pin.lng, pin.lat, d, b) })));
   const allPts = [];
@@ -554,8 +554,9 @@ async function runFpSurvey() {
     const roofGap = (centre !== null && ground !== null) ? centre - ground : null;
     const eye = ground !== null ? ground + 1.7 : null;
     const midObs = (eye !== null && midH.every(h => h !== null)) ? Math.max(...midH) - eye : null;
-    const ok = roofGap !== null && roofGap < 2 && midObs !== null && midObs < 2.5;
-    lines.push(`${c.b} ${c.d}m | centre ${centre === null ? 'n/a' : centre.toFixed(1)} ground ${ground === null ? 'n/a' : ground.toFixed(1)} gap ${roofGap === null ? 'n/a' : roofGap.toFixed(1)} | midObs ${midObs === null ? 'n/a' : midObs.toFixed(1)} | ${ok ? 'CLEAR' : 'blocked'}`);
+    const roof = centre !== null && centre >= 16.5;
+    const ok = !roof && roofGap !== null && roofGap < 2 && midObs !== null && midObs < 2.5;
+    lines.push(`${c.b} ${c.d}m | centre ${centre === null ? 'n/a' : centre.toFixed(1)} ground ${ground === null ? 'n/a' : ground.toFixed(1)} gap ${roofGap === null ? 'n/a' : roofGap.toFixed(1)} | midObs ${midObs === null ? 'n/a' : midObs.toFixed(1)} | ${roof ? 'ROOF' : ok ? 'CLEAR' : 'blocked'}`);
   });
   sidebar.innerHTML = '';
   const h = document.createElement('h2'); h.textContent = 'FP viewpoint survey';
