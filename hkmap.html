@@ -147,7 +147,7 @@
     <div class="map-box">
       <div id="map"></div>
       <div class="map-loading" id="loadingMsg">Loading map…</div>
-      <div class="landsd-badge">地圖資料 © 地政總署 Lands Department <span id="zoomReadout"></span></div>
+      <div class="landsd-badge">地圖資料 © 地政總署 Lands Department</div>
     </div>
     <div class="map-hint"><span class="hint-line">Zoom in to street level. Click a district or a pin to list its objects.</span><span class="hint-line"><span class="dot first" style="background:#4ecdc4"></span>Street 街道<span class="dot" style="background:#ff6b6b"></span>Building 建築物 — 50 located streets &amp; buildings are pinned; the rest appear in the panel only.</span><span class="hint-line">🖼️ Image preview available on M+ Collection</span></div>
   </div>
@@ -700,9 +700,6 @@ async function init() {
     const pinAt = e => map.queryRenderedFeatures(e.point, { layers: ['pin-street', 'pin-building'] });
 
     hkMapRef = map;
-    const zr = document.getElementById('zoomReadout');
-    const showZoom = () => { if (zr) zr.textContent = '· z' + map.getZoom().toFixed(2); };
-    map.on('move', showZoom); showZoom();
     flyToPoint = (lng, lat, zoom) => map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), zoom), duration: 1100 });
     flyToBounds = b => map.fitBounds(b, { padding: 50, duration: 1100, maxZoom: 13.5 });
     map.on('click', 'district-fill', e => {
