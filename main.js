@@ -63,7 +63,7 @@ function getCurrentData() {
 // Load museum data
 async function loadData() {
   try {
-    const response = await fetch('./data/museum-index.json?v=3');
+    const response = await fetch('./data/museum-index.json?v=4');
     if (!response.ok) throw new Error('Failed to load data');
     museumData = await response.json();
     console.log('Museum data loaded:', museumData.stats);
@@ -191,7 +191,7 @@ function openContributor(name) {
 // small corrections stay out of the multi-MB datasets.
 async function loadCreditsAndPatches() {
   try {
-    const resp = await fetch('./data/credits.json.b64?v=1');
+    const resp = await fetch('./data/credits.json.b64?v=2');
     if (resp.ok && window.DecompressionStream) {
       const b64 = (await resp.text()).trim();
       const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
