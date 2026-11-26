@@ -382,9 +382,9 @@ function showObjects(key, nameEn, nameTc, levelLabel, count, extraKeys) {
 
 /* ---------- data ---------- */
 Promise.all([
-  fetch('./data/map-hk.json?v=6').then(r => r.json()),
+  fetch('./data/map-hk.json?v=7').then(r => r.json()),
   fetch('./data/map-hk-objects.json?v=2').then(r => r.json()),
-  fetch('./data/map-hk-pins.json?v=5').then(r => r.json()),
+  fetch('./data/map-hk-pins.json?v=6').then(r => r.json()),
   fetch('./data/mplus-links.json?v=2').then(r => r.json()).catch(() => ({})),
   fetch('./data/mplus-images.json?v=3').then(r => r.json()).catch(() => ({}))
 ]).then(([hk, objects, pins, links, images]) => {

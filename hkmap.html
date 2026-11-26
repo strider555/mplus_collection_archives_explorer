@@ -551,9 +551,9 @@ function largestCentre(geom) {
 async function init() {
   const [geo, data, objects, pinsData, style, links, images] = await Promise.all([
     fetch('./data/hk_districts.json').then(r => r.json()),
-    fetch('./data/map-hk.json?v=6').then(r => r.json()),
+    fetch('./data/map-hk.json?v=7').then(r => r.json()),
     fetch('./data/map-hk-objects.json?v=2').then(r => r.json()),
-    fetch('./data/map-hk-pins.json?v=5').then(r => r.json()),
+    fetch('./data/map-hk-pins.json?v=6').then(r => r.json()),
     buildStyle(),
     fetch('./data/mplus-links.json?v=2').then(r => r.json()).catch(() => ({})),
     fetch('./data/mplus-images.json?v=3').then(r => r.json()).catch(() => ({}))
