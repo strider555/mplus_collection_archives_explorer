@@ -153,7 +153,7 @@
       <div id="cesiumContainer"></div>
       <div class="map-loading" id="loadingMsg">Loading 3D buildings from the Lands Department…<br>載入地政總署三維建築中，視乎網絡可能需時十數秒</div>
       <div class="landsd-badge">三維地圖 © 地政總署 Lands Department</div>
-      <div id="fpBar"><span>👤 第一人稱視角 — 拖曳環顧 · 滾輪前進／後退</span><span id="fpDebug" style="color:#8b949e"></span><button id="fpExit" type="button">退出 ✕</button></div>
+      <div id="fpBar"><span>👤 First Person View — 拖曳環顧 · 滾輪前進／後退</span><span id="fpDebug" style="color:#8b949e"></span><button id="fpExit" type="button">退出 ✕</button></div>
     </div>
     <div class="map-hint"><span class="hint-line">Drag to orbit · scroll to zoom · right-drag to pan. Click a pin or a place in the list to fly to it and list its objects.</span><span class="hint-line"><span class="dot first" style="background:#4ecdc4"></span>Street 街道<span class="dot" style="background:#ff6b6b"></span>Building 建築物 — the same 50 pinned streets &amp; buildings as the 2D map, on the photorealistic 3D city model.</span><span class="hint-line">🖼️ Image preview available on M+ Collection</span></div>
   </div>
@@ -356,6 +356,10 @@ function flyToPlace(lng, lat) {
 }
 /* ---------- first-person view (trial case: Chung Chi Hall Student Centre) ---------- */
 const FP_CASES = new Set(['Chung Chi Hall Student Centre']);
+const FP_VIEWPOINTS = {
+  // Chung Chi Hall: stand on Pond Crescent （池旁路）, the road in front of the hall, facing its facade (OSM way 33278102)
+  'Chung Chi Hall Student Centre': { lng: 114.209749, lat: 22.416498, heading: 7, pitch: 6 }
+};
 let currentPin = null;
 const fp = { active: false, heading: 0, pitch: 0, eyeHeight: 0, lng: 0, lat: 0, dragging: false, lastX: 0, lastY: 0, marker: null };
 const fpBar = document.getElementById('fpBar');
@@ -383,8 +387,8 @@ async function sampleHeights(lngLatList) {
 }
 async function enterFirstPerson(pin) {
   if (!viewer || fp.active) return;
-  // Stand on the open lawn about 38 m south of the building, looking north at its sawtooth facade
-  const vp = destPoint(pin.lng, pin.lat, 38, 175);
+  const cfg = FP_VIEWPOINTS[pin.keys[0]] || null;
+  const vp = cfg ? { lng: cfg.lng, lat: cfg.lat } : destPoint(pin.lng, pin.lat, 38, 175);
   const cross = [[0, 0], [7, 0], [-7, 0], [0, 7], [0, -7]].map(([e, n]) => {
     if (!e && !n) return [vp.lng, vp.lat];
     const p = destPoint(vp.lng, vp.lat, Math.hypot(e, n), (Math.atan2(e, n) * 180 / Math.PI + 360) % 360);
@@ -397,7 +401,7 @@ async function enterFirstPerson(pin) {
   }
   if (ground === null) ground = 18;
   fp.lng = vp.lng; fp.lat = vp.lat; fp.eyeHeight = ground + 1.7;
-  fp.heading = (175 + 180) % 360; fp.pitch = 3;
+  fp.heading = cfg ? cfg.heading : (175 + 180) % 360; fp.pitch = cfg ? cfg.pitch : 3;
   const dbg = document.getElementById('fpDebug');
   if (dbg) dbg.textContent = `ground ${ground.toFixed(1)}m · eye ${fp.eyeHeight.toFixed(1)}m`;
   if (viewer) {
@@ -492,7 +496,7 @@ function showObjects(key, nameEn, nameTc, levelLabel, count, extraKeys) {
   if (pin && FP_CASES.has(key)) {
     const fpBtn = document.createElement('button');
     fpBtn.className = 'fp-btn';
-    fpBtn.textContent = '👤 第一人稱視角';
+    fpBtn.textContent = '👤 First Person View';
     fpBtn.addEventListener('click', () => enterFirstPerson(pin));
     sidebar.appendChild(fpBtn);
   }
