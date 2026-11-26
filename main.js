@@ -63,13 +63,13 @@ function getCurrentData() {
 // Load museum data
 async function loadData() {
   try {
-    const response = await fetch('./data/museum-index.json?v=5');
+    const response = await fetch('./data/museum-index.json?v=6');
     if (!response.ok) throw new Error('Failed to load data');
     museumData = await response.json();
     console.log('Museum data loaded:', museumData.stats);
     // Load full objects for cross-filtering
     try {
-      const fullResp = await fetch('./data/pulse.json?v=2');
+      const fullResp = await fetch('./data/pulse.json?v=3');
       if (fullResp.ok) {
         fullObjects = await fullResp.json();
         objectById = new Map();
