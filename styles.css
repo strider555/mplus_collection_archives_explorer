@@ -445,6 +445,21 @@ html, body {
   padding-left: 8px;
 }
 
+/* Collection Archives submenu: two-line items (name, then count below) — looser than the one-line rows */
+#sub-archives .legend-sub-item {
+  flex-wrap: wrap;
+  row-gap: 1px;
+  padding: 6px 10px;
+}
+#sub-archives .legend-sub-item > span:first-child { line-height: 1.45; }
+#sub-archives .legend-sub-item .sub-count {
+  flex-basis: 100%;
+  margin-left: 0;
+  padding-left: 0;
+  text-align: left;
+  font-size: 11px;
+}
+
 /* Side panel */
 .side-panel {
   position: absolute;
