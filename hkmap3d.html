@@ -524,6 +524,47 @@ function showObjects(key, nameEn, nameTc, levelLabel, count, extraKeys) {
   });
 }
 
+/* ---------- FP viewpoint survey (diagnostic, ?fpsurvey=1) ---------- */
+async function runFpSurvey() {
+  const pin = pinList.find(p => (p.keys || []).includes('Chung Chi Hall Student Centre'));
+  if (!pin || !viewer) return;
+  sidebar.innerHTML = '<h2>FP viewpoint survey — sampling…</h2>';
+  const bearings = [120, 150, 180, 210, 240], dists = [12, 16, 20, 26, 34];
+  const cands = [];
+  bearings.forEach(b => dists.forEach(d => cands.push({ b, d, vp: destPoint(pin.lng, pin.lat, d, b) })));
+  const allPts = [];
+  cands.forEach(c => {
+    c.cross = [[0, 0], [5, 0], [-5, 0], [0, 5], [0, -5]].map(([e, n]) => {
+      if (!e && !n) return [c.vp.lng, c.vp.lat];
+      const p = destPoint(c.vp.lng, c.vp.lat, Math.hypot(e, n), (Math.atan2(e, n) * 180 / Math.PI + 360) % 360);
+      return [p.lng, p.lat];
+    });
+    c.mids = [0.33, 0.66].map(t => [c.vp.lng + (pin.lng - c.vp.lng) * t, c.vp.lat + (pin.lat - c.vp.lat) * t]);
+    allPts.push(...c.cross, ...c.mids);
+  });
+  const hs = await sampleHeights(allPts);
+  let i = 0;
+  const lines = ['bearing dist | centre ground roofGap | midObs | verdict'];
+  cands.forEach(c => {
+    const crossH = hs.slice(i, i + 5); i += 5;
+    const midH = hs.slice(i, i + 2); i += 2;
+    const valid = crossH.filter(h => h !== null);
+    const centre = crossH[0];
+    const ground = valid.length ? Math.min(...valid) : null;
+    const roofGap = (centre !== null && ground !== null) ? centre - ground : null;
+    const eye = ground !== null ? ground + 1.7 : null;
+    const midObs = (eye !== null && midH.every(h => h !== null)) ? Math.max(...midH) - eye : null;
+    const ok = roofGap !== null && roofGap < 2 && midObs !== null && midObs < 2.5;
+    lines.push(`${c.b} ${c.d}m | centre ${centre === null ? 'n/a' : centre.toFixed(1)} ground ${ground === null ? 'n/a' : ground.toFixed(1)} gap ${roofGap === null ? 'n/a' : roofGap.toFixed(1)} | midObs ${midObs === null ? 'n/a' : midObs.toFixed(1)} | ${ok ? 'CLEAR' : 'blocked'}`);
+  });
+  sidebar.innerHTML = '';
+  const h = document.createElement('h2'); h.textContent = 'FP viewpoint survey';
+  const pre = document.createElement('pre');
+  pre.style.cssText = 'font-size:11px;white-space:pre-wrap;line-height:1.6;color:#e6e8eb';
+  pre.textContent = lines.join('\n');
+  sidebar.appendChild(h); sidebar.appendChild(pre);
+}
+
 /* ---------- data ---------- */
 Promise.all([
   fetch('./data/map-hk.json?v=7').then(r => r.json()),
@@ -536,6 +577,7 @@ Promise.all([
   mplusLinks = links || {}; mplusImages = images || {};
   renderLists();
   buildScene();
+  if (new URLSearchParams(location.search).has('fpsurvey')) setTimeout(runFpSurvey, 30000);
 }).catch(err => {
   loadingMsg.textContent = 'Could not load the map data: ' + err.message;
 });
