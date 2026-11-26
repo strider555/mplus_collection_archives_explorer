@@ -374,30 +374,42 @@ function fpSetView() {
     orientation: { heading: Cesium.Math.toRadians(fp.heading), pitch: Cesium.Math.toRadians(fp.pitch), roll: 0 }
   });
 }
+async function sampleHeights(lngLatList) {
+  try {
+    const res = await viewer.scene.sampleHeightMostDetailed(
+      lngLatList.map(([lng, lat]) => Cesium.Cartographic.fromDegrees(lng, lat)));
+    return res.map(c => (c && isFinite(c.height)) ? c.height : null);
+  } catch (e) { return lngLatList.map(() => null); }
+}
 async function enterFirstPerson(pin) {
   if (!viewer || fp.active) return;
-  // Stand about 55 m south-east of the building (lakeside), looking back at its facade
-  const vp = destPoint(pin.lng, pin.lat, 55, 140);
-  let ground = null;
-  try {
-    const sampled = await viewer.scene.sampleHeightMostDetailed([Cesium.Cartographic.fromDegrees(vp.lng, vp.lat)]);
-    if (sampled && sampled[0] && isFinite(sampled[0].height)) ground = sampled[0].height;
-  } catch (e) { /* fall through to the simpler sampler */ }
+  // Stand on the open lawn about 38 m south of the building, looking north at its sawtooth facade
+  const vp = destPoint(pin.lng, pin.lat, 38, 175);
+  const cross = [[0, 0], [7, 0], [-7, 0], [0, 7], [0, -7]].map(([e, n]) => {
+    if (!e && !n) return [vp.lng, vp.lat];
+    const p = destPoint(vp.lng, vp.lat, Math.hypot(e, n), (Math.atan2(e, n) * 180 / Math.PI + 360) % 360);
+    return [p.lng, p.lat];
+  });
+  const hs = (await sampleHeights(cross)).filter(h => h !== null);
+  let ground = hs.length ? Math.min(...hs) : null; // lowest nearby surface = open ground, not tree canopy
   if (ground === null) {
     try { const h = viewer.scene.sampleHeight(Cesium.Cartographic.fromDegrees(vp.lng, vp.lat)); if (isFinite(h)) ground = h; } catch (e) { /* keep null */ }
   }
   if (ground === null) ground = 18;
   fp.lng = vp.lng; fp.lat = vp.lat; fp.eyeHeight = ground + 1.7;
-  fp.heading = (140 + 180) % 360; fp.pitch = 1;
+  fp.heading = (175 + 180) % 360; fp.pitch = 3;
   viewer.camera.flyTo({
     destination: Cesium.Cartesian3.fromDegrees(fp.lng, fp.lat, fp.eyeHeight),
     orientation: { heading: Cesium.Math.toRadians(fp.heading), pitch: Cesium.Math.toRadians(fp.pitch), roll: 0 },
     duration: 1.8,
-    complete: () => {
+    complete: async () => {
       fp.active = true;
       viewer.scene.screenSpaceCameraController.enableInputs = false;
       fpBar.classList.add('show');
       fpSetView();
+      // Safety net: if the surface at the camera spot is higher than the eye, lift above it
+      const centre = (await sampleHeights([[fp.lng, fp.lat]]))[0];
+      if (centre !== null && centre + 1.2 > fp.eyeHeight) { fp.eyeHeight = centre + 1.7; fpSetView(); }
     }
   });
 }
