@@ -444,7 +444,10 @@ async function buildStyle() {
       const tj = abs(s.url, styleUrl);
       s.tiles = [tj + 'tile/{z}/{y}/{x}.pbf'];
       delete s.url;
-      if (s.maxzoom == null) s.maxzoom = 18;
+      // The styles declare maxzoom 19, but the tile service in fact stops at
+      // z16 — past that the basemap silently goes blank. Cap the sources at
+      // 16 and let MapLibre overzoom the (vector) z16 tiles instead.
+      s.maxzoom = 16;
     }
   };
   Object.values(bs.sources || {}).forEach(s => toTiles(s, BASE_STYLE_URL));
@@ -618,7 +621,7 @@ async function init() {
     bounds: [[114.118, 22.262], [114.215, 22.312]],
     fitBoundsOptions: { padding: 18 },
     minZoom: 9,
-    maxZoom: 19,
+    maxZoom: 18,
     maxBounds: [[113.55, 21.85], [114.75, 22.8]],
     attributionControl: { compact: true },
     dragRotate: false,
