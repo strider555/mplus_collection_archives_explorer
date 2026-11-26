@@ -357,8 +357,9 @@ function flyToPlace(lng, lat) {
 /* ---------- first-person view (trial case: Chung Chi Hall Student Centre) ---------- */
 const FP_CASES = new Set(['Chung Chi Hall Student Centre']);
 const FP_VIEWPOINTS = {
-  // Chung Chi Hall: stand on Pond Crescent （池旁路）, the road in front of the hall, facing its facade (OSM way 33278102)
-  'Chung Chi Hall Student Centre': { lng: 114.209749, lat: 22.416498, heading: 7, pitch: 6 }
+  // Chung Chi Hall: stand on the open forecourt in front of the facade (the strip between
+  // the hall and Pond Crescent — the road itself is inside tree-canopy mesh, the forecourt is clear)
+  'Chung Chi Hall Student Centre': { lng: 114.209769, lat: 22.416562, heading: 0, pitch: 5 }
 };
 let currentPin = null;
 const fp = { active: false, heading: 0, pitch: 0, eyeHeight: 0, lng: 0, lat: 0, dragging: false, lastX: 0, lastY: 0, marker: null };
